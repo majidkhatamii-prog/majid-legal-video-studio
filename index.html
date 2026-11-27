@@ -160,7 +160,8 @@ function wrap(text,max){const words=text.split(/\s+/),lines=[];let line='';for(c
 function palette(){const t=$('theme').value;return t==='light'?{bg:'#f4f0e6',panel:'#fffdf8',ink:'#20334c',gold:'#a27b32',muted:'#687486'}:t==='minimal'?{bg:'#111816',panel:'#1c2924',ink:'#f7f3e9',gold:'#d1ad65',muted:'#b7c1ba'}:t==='cinema'?{bg:'#0b1425',panel:'#172844',ink:'#f8f5ed',gold:'#d6b66f',muted:'#c0c9d6'}:{bg:'#101d35',panel:'#1b3153',ink:'#f7f3e9',gold:'#c7a45e',muted:'#c2cad5'}}
 
 
-const vectorBackgroundCache={},vectorForegroundCache={};
+
+const vectorBackgroundCache={},vectorForegroundCache={},photoBackgroundCache={};
 function sceneKind(text){
  const t=String(text||'').replace(/\s+/g,' ');
  if(/اثر انگشت|جعل|امضا|انگشت|مهر/.test(t))return 'signature';
@@ -172,79 +173,88 @@ function sceneKind(text){
  if(/دادگاه|قاضی|حکم|دادگستری|دادرسی|شکایت|دفاع|پرونده/.test(t))return 'court';
  return 'justice';
 }
+const backgroundPhotoUrls={
+ property:['https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1600566753086-00f18fb6b3ea?auto=format&fit=crop&w=900&q=82'],
+ contract:['https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=900&q=82'],
+ court:['https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=900&q=82'],
+ justice:['https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&w=900&q=82'],
+ family:['https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1476703993599-0035a21b17a9?auto=format&fit=crop&w=900&q=82'],
+ criminal:['https://images.unsplash.com/photo-1453873531674-2151bcd01707?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1505664194779-8beaceb93744?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=900&q=82'],
+ car:['https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=900&q=82'],
+ signature:['https://images.unsplash.com/photo-1450101499163-c8848c66ca85?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1554224155-6726b3ff858f?auto=format&fit=crop&w=900&q=82','https://images.unsplash.com/photo-1516387938699-a93567ec168e?auto=format&fit=crop&w=900&q=82']
+};
 const foregroundVariants={
  property:[
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".16"><path d="M45 115L180 20l135 95v110H45z"/><path d="M145 225v-82h70v82" fill="none"/><path d="M75 125h48v45H75zM237 125h48v45h-48z" fill="none"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="none"><path d="M65 70h230v155H65zM95 105h170M95 140h130M95 175h85"/><path d="M205 195l75-75 22 22-75 75-30 8z" fill="#c5a45b" fill-opacity=".3"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".18"><path d="M55 100h250v125H55z"/><path d="M90 100V65h180v35M110 135h140M110 170h95"/><circle cx="180" cy="195" r="20"/></g>'
+ '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="none"><path d="M75 35h210v175H75zM115 80h130M115 115h130M115 150h90"/><path d="M215 185l60-60 20 20-60 60-25 8z"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><circle cx="180" cy="120" r="75"/><path d="M180 45v150M105 120h150"/><path d="M130 75l100 90M230 75L130 165"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="#c5a45b" fill-opacity=".15"><path d="M55 65h250v155H55z"/><path d="M90 105h180M90 145h130M90 185h95"/></g>'
  ],
  contract:[
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".12"><path d="M80 18h150l55 55v155H80z"/><path d="M230 18v58h55M115 110h135M115 145h135M115 180h75" fill="none" stroke-linecap="round"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="none"><path d="M55 45h185l65 65v120H55zM240 45v68h65M95 145h150M95 180h100"/><path d="M195 215l75-75 20 20-75 75-30 8z" fill="#c5a45b"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".12"><rect x="55" y="35" width="250" height="190" rx="14"/><path d="M90 85h180M90 120h180M90 155h110M90 190h75" fill="none" stroke-linecap="round"/></g>'
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M80 35h200v170H80zM115 80h130M115 115h130"/><path d="M115 170q40-45 75 0t70-5" stroke-linecap="round"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="#c5a45b" fill-opacity=".18"><path d="M180 20l22 70 72 22-72 22-22 70-22-70-72-22 72-22z"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><circle cx="180" cy="120" r="82"/><path d="M130 120l35 35 70-80" stroke-linecap="round"/></g>'
  ],
  court:[
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".12"><path d="M35 75L180 18 325 75zM48 205h264M65 225h230"/><path d="M75 85v115M145 85v115M215 85v115M285 85v115" fill="none"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="none"><path d="M60 210h240M80 185h200M100 160h160M120 65h120v95H120z"/><path d="M150 95h60M150 125h60"/><path d="M180 20v40M155 40h50"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".12"><path d="M55 75h250v145H55z"/><path d="M90 75V45h180v30M90 115h180M90 155h120M90 190h90" fill="none"/></g>'
- ],
- family:[
- '<g stroke="#f1d89c" stroke-width="9" fill="#c5a45b" fill-opacity=".18"><circle cx="180" cy="65" r="35"/><circle cx="85" cy="100" r="28"/><circle cx="275" cy="100" r="28"/><path d="M105 220q0-90 75-90t75 90M18 220q0-75 67-75t67 75M208 220q0-75 67-75t67 75" stroke-linecap="round"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M45 210q135-150 270 0"/><path d="M180 45c-70-55-125 35 0 115 125-80 70-170 0-115z" fill="#c5a45b" fill-opacity=".2"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" fill="#c5a45b" fill-opacity=".16"><path d="M45 220v-70q0-45 45-45t45 45v70M225 220v-70q0-45 45-45t45 45v70"/><circle cx="90" cy="65" r="35"/><circle cx="270" cy="65" r="35"/><path d="M135 150q45-65 90 0" fill="none"/></g>'
- ],
- criminal:[
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".15"><path d="M180 18l125 45v80q0 80-125 115Q55 223 55 143V63z"/><path d="M125 125l38 38 75-80" fill="none" stroke-linecap="round"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="none"><path d="M180 20l115 42v75q0 72-115 112Q65 209 65 137V62z"/><path d="M135 100l90 90M225 100l-90 90"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".15"><circle cx="180" cy="115" r="82"/><path d="M135 115h90M180 70v90M80 220h200" fill="none"/></g>'
- ],
- car:[
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".18"><path d="M40 155l25-65q8-20 30-20h170q22 0 32 22l23 63v55H40z"/><path d="M80 105h200M105 220a25 25 0 1 0 0-50 25 25 0 0 0 0 50M255 220a25 25 0 1 0 0-50 25 25 0 0 0 0 50"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="none"><path d="M55 175h250l-25-65q-8-20-30-20H115q-22 0-30 20z"/><path d="M105 125h150M90 175v35M270 175v35"/><circle cx="115" cy="205" r="22"/><circle cx="245" cy="205" r="22"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".15"><path d="M35 170l30-65q10-20 30-20h170q25 0 35 25l25 60v45H35z"/><path d="M100 105l-20 60M260 105l20 60" fill="none"/><circle cx="105" cy="210" r="20"/><circle cx="255" cy="210" r="20"/></g>'
- ],
- signature:[
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="none"><path d="M65 20h155l75 70v135H65zM220 20v72h75M105 125h140M105 155h95"/><path d="M105 195q30-40 48 0t45-3q18-28 35 0" stroke-linecap="round"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" fill="none"><circle cx="180" cy="120" r="90" stroke-dasharray="7 9"/><path d="M180 55q-65 15-65 70t65 70q65-15 65-70t-65-70zM180 80q-40 15-40 45t40 45q40-15 40-45t-40-45z"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".14"><path d="M65 30h230v185H65z"/><path d="M100 80h160M100 115h120"/><path d="M105 175q35-40 60 0t55-5" fill="none" stroke-linecap="round"/><path d="M225 205l65-65 18 18-65 65-27 9z"/></g>'
+ '<g stroke="#f1d89c" stroke-width="9" fill="none" stroke-linejoin="round"><path d="M70 75l110-55 110 55zM80 205h200M100 85v110M155 85v110M210 85v110M265 85v110"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="none" stroke-linecap="round"><path d="M90 75l100 55M270 75L170 130M180 25v185"/><path d="M65 80l50-35 25 40-50 35zM220 85l25-40 50 35-25 40z"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M65 40h230v175H65zM105 85h150M105 125h150M105 165h90"/></g>'
  ],
  justice:[
- '<g fill="none" stroke="#f1d89c" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M180 18v190M130 48h100M180 48l-70 32M180 48l70 32"/><path d="M80 82l-35 70h70zM280 82l-35 70h70z"/><path d="M35 155q45 28 90 0M235 155q45 28 90 0M145 210h70"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" fill="none" stroke-linejoin="round"><path d="M70 45h220v170H70z"/><path d="M110 90h140M110 125h140M110 160h85"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" fill="#c5a45b" fill-opacity=".15"><path d="M180 20l120 65v110l-120 40L60 195V85z"/><path d="M120 130l40 40 85-95" fill="none" stroke-linecap="round"/></g>'
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M180 25v180M115 65h130M180 65l-70 55M180 65l70 55"/><path d="M110 120l-40 65h80zM250 120l-40 65h80zM45 190q65 30 130 0M185 190q65 30 130 0"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M85 35h190v175H85zM120 80h120M120 120h120M120 160h80"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="#c5a45b" fill-opacity=".15"><path d="M180 20l120 65v100l-120 40L60 185V85z"/><path d="M120 130l40 40 85-95" fill="none" stroke-linecap="round"/></g>'
+ ],
+ family:[
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M180 30c-60-45-115 35 0 110 115-75 60-155 0-110z"/><path d="M65 205q115-95 230 0"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><circle cx="180" cy="75" r="35"/><circle cx="95" cy="115" r="25"/><circle cx="265" cy="115" r="25"/><path d="M115 220q0-80 65-80t65 80M20 220q0-65 75-65t75 65M190 220q0-65 75-65t75 65"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M70 70h220v145H70z"/><path d="M110 110h140M110 150h100"/></g>'
+ ],
+ criminal:[
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M180 20l120 45v80q0 70-120 110Q60 215 60 145V65z"/><path d="M125 120h110M180 75v90"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><circle cx="180" cy="120" r="85"/><path d="M120 65l120 110M240 65L120 175"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M85 45h190v165H85z"/><path d="M120 90h120M120 130h120M120 170h80"/></g>'
+ ],
+ car:[
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M180 25v190M105 90h150M105 90l-35 65h70zM255 90l-35 65h70z"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M70 40h220v175H70z"/><path d="M105 80h150M105 120h150M105 160h95"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><circle cx="180" cy="120" r="82"/><circle cx="180" cy="120" r="28"/><path d="M180 38v54M110 160l45-25M250 160l-45-25"/></g>'
+ ],
+ signature:[
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><circle cx="180" cy="120" r="90" stroke-dasharray="7 9"/><path d="M180 55q-65 15-65 70t65 70q65-15 65-70t-65-70zM180 80q-40 15-40 45t40 45q40-15 40-45t-40-45z"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M70 45h220v170H70z"/><path d="M105 90h150M105 125h150"/><path d="M105 180q35-40 65 0t65-5" stroke-linecap="round"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" fill="#c5a45b" fill-opacity=".18"><path d="M205 25l35 35-120 120-55 20 20-55z"/></g>'
  ]
 };
 function foregroundSvg(kind,variant){
  const art=(foregroundVariants[kind]||foregroundVariants.justice)[variant%3];
  return '<svg xmlns="http://www.w3.org/2000/svg" width="360" height="240" viewBox="0 0 360 240">'+art+'</svg>';
 }
-function backgroundSvg(kind,variant){
- const palettes=[
- ['#152b3a','#3e6270','#101b29','#c5a45b'],
- ['#263746','#637a83','#152431','#d4b879'],
- ['#182c35','#526b70','#0e2029','#b99b62'],
- ['#243342','#6a7779','#17212a','#e0c58b']
- ];
- const c=palettes[variant%palettes.length];
- let scene='';
- if(kind==='property')scene=variant%3===0?'<path d="M40 800V430l320-250 320 250v370z" fill="#d9d0bd"/><path d="M15 450l345-280 345 280" fill="none" stroke="#bca77d" stroke-width="35"/><g fill="#4d6870"><rect x="105" y="500" width="125" height="150"/><rect x="490" y="500" width="125" height="150"/></g><rect x="290" y="480" width="140" height="320" fill="#795f49"/>' :'<rect x="0" y="470" width="720" height="420" fill="#c5b99f"/><path d="M0 470L360 210l360 260" fill="#9a8064"/><rect x="90" y="520" width="540" height="350" fill="#e0d4bd"/><g fill="#617783"><rect x="140" y="575" width="110" height="145"/><rect x="470" y="575" width="110" height="145"/></g><rect x="300" y="560" width="120" height="310" fill="#795d48"/>';
- else if(kind==='contract'||kind==='signature')scene=variant%3===0?'<path d="M0 700L720 550v730H0z" fill="#765e4c"/><rect x="135" y="350" width="450" height="540" rx="12" fill="#eee8d9" transform="rotate(-8 360 620)"/><path d="M210 480h270M205 545h260M195 610h230" stroke="#9c9b91" stroke-width="12"/><path d="M240 760q80-85 130 0t110-20" stroke="#496274" stroke-width="13" fill="none"/>' :'<rect x="0" y="650" width="720" height="630" fill="#715b49"/><rect x="170" y="300" width="380" height="600" rx="16" fill="#e9e3d5"/><path d="M225 410h270M225 480h270M225 550h230M225 620h180" stroke="#9a9b95" stroke-width="12"/><path d="M350 760l190-190 35 35-190 190-55 20z" fill="#b9955d"/>';
- else if(kind==='court'||kind==='justice')scene=variant%3===0?'<rect x="0" y="650" width="720" height="630" fill="#222e38"/><path d="M80 430L360 210 640 430z" fill="#b8aa91"/><rect x="95" y="430" width="530" height="460" fill="#d4c7ad"/><g fill="#8a8b83"><rect x="140" y="450" width="55" height="420"/><rect x="255" y="450" width="55" height="420"/><rect x="410" y="450" width="55" height="420"/><rect x="525" y="450" width="55" height="420"/></g><path d="M70 900h580" stroke="#b99b62" stroke-width="24"/>' :'<rect x="0" y="680" width="720" height="600" fill="#283540"/><rect x="90" y="320" width="540" height="520" fill="#b9b09f"/><path d="M70 320L360 170l290 150z" fill="#d6c9b0"/><g fill="#7b8583"><rect x="150" y="380" width="65" height="390"/><rect x="260" y="380" width="65" height="390"/><rect x="395" y="380" width="65" height="390"/><rect x="505" y="380" width="65" height="390"/></g>';
- else if(kind==='family')scene=variant%3===0?'<rect x="0" y="720" width="720" height="560" fill="#766a5a"/><rect x="75" y="270" width="570" height="520" fill="#d7c9b4"/><rect x="120" y="330" width="210" height="230" fill="#607985"/><rect x="390" y="330" width="190" height="230" fill="#607985"/><rect x="220" y="610" width="280" height="180" rx="22" fill="#8a6652"/>' :'<rect x="0" y="730" width="720" height="550" fill="#6b5b4d"/><rect x="80" y="250" width="560" height="550" fill="#d9cdb9"/><rect x="130" y="310" width="460" height="250" fill="#758a8a"/><rect x="150" y="600" width="420" height="190" rx="25" fill="#92745e"/>';
- else if(kind==='car')scene=variant%3===0?'<path d="M0 650L720 520v760H0z" fill="#343d45"/><path d="M0 900L720 770" stroke="#e8d9b6" stroke-width="18" stroke-dasharray="65 55"/><path d="M160 690l65-140h260l90 140v150H160z" fill="#73858a"/><path d="M240 570h210l65 110H190z" fill="#9fb4b5"/>' :'<rect x="0" y="760" width="720" height="520" fill="#39444a"/><path d="M0 880h720" stroke="#e3d3ad" stroke-width="16" stroke-dasharray="70 55"/><path d="M115 700l55-130h330l95 130v150H115z" fill="#667d86"/><path d="M205 585h270l65 110H155z" fill="#b4c3bf"/>';
- else scene='<rect x="0" y="650" width="720" height="630" fill="#273640"/><path d="M120 300h480v420H120z" fill="#b9b09f"/><path d="M170 360h380M170 440h380M170 520h300" stroke="#7b8583" stroke-width="18"/>';
- const svg='<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 720 1280"><defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="'+c[0]+'"/><stop offset=".58" stop-color="'+c[1]+'"/><stop offset="1" stop-color="'+c[2]+'"/></linearGradient><linearGradient id="shade" x2="0" y2="1"><stop stop-color="#08131c" stop-opacity=".05"/><stop offset="1" stop-color="#08131c" stop-opacity=".72"/></linearGradient></defs><rect width="720" height="1280" fill="url(#sky)"/><circle cx="'+(100+variant*150)+'" cy="180" r="115" fill="'+c[3]+'" opacity=".22"/><path d="M0 780Q180 690 360 770T720 740V1280H0Z" fill="#18252b" opacity=".22"/>'+scene+'<rect width="720" height="1280" fill="url(#shade)"/><g opacity=".12" stroke="#fff" stroke-width="2"><path d="M30 0v1280M690 0v1280"/></g></svg>';
- return svg;
+function fallbackBackgroundSvg(kind,variant){
+ const palettes=[['#152b3a','#3e6270','#101b29'],['#263746','#637a83','#152431'],['#182c35','#526b70','#0e2029']];
+ const c=palettes[variant%3];
+ return '<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 720 1280"><defs><linearGradient id="g" x2="0" y2="1"><stop stop-color="'+c[0]+'"/><stop offset=".6" stop-color="'+c[1]+'"/><stop offset="1" stop-color="'+c[2]+'"/></linearGradient></defs><rect width="720" height="1280" fill="url(#g)"/><circle cx="550" cy="240" r="260" fill="#c5a45b" opacity=".12"/><path d="M0 850Q180 760 360 850T720 820V1280H0Z" fill="#071923" opacity=".3"/></svg>';
 }
 function cacheVectorImage(cache,key,svg){
  if(cache[key])return Promise.resolve(cache[key]);
  return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>{cache[key]=im;resolve(im)};im.onerror=()=>reject(new Error('بارگذاری تصویر وکتوری ناموفق بود'));im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)});
 }
-async function preloadVectorArt(sceneList){
- await Promise.all(sceneList.flatMap((scene,index)=>{const kind=sceneKind(scene),variant=index%3,key=kind+'-'+variant;return [cacheVectorImage(vectorBackgroundCache,key,backgroundSvg(kind,variant)),cacheVectorImage(vectorForegroundCache,key,foregroundSvg(kind,(index+1)%3))]}));
+function cachePhoto(key,url){
+ if(photoBackgroundCache[key])return Promise.resolve(photoBackgroundCache[key]);
+ return new Promise(resolve=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>{photoBackgroundCache[key]=im;resolve(im)};im.onerror=()=>resolve(null);im.src=url});
 }
-function sceneImage(scene,index){return loadedImages.length?loadedImages[index%loadedImages.length]:(vectorBackgroundCache[sceneKind(scene)+'-'+(index%3)]||null)}
-function foregroundImage(scene,index){return vectorForegroundCache[sceneKind(scene)+'-'+((index+1)%3)]||null}
+async function preloadVectorArt(sceneList){
+ await Promise.all(sceneList.flatMap((scene,index)=>{
+  const kind=sceneKind(scene),variant=index%3,key=kind+'-'+index;
+  const urls=backgroundPhotoUrls[kind]||backgroundPhotoUrls.justice;
+  return [cachePhoto(key,urls[variant]),cacheVectorImage(vectorForegroundCache,key,foregroundSvg(kind,(index+1)%3)),cacheVectorImage(vectorBackgroundCache,key,fallbackBackgroundSvg(kind,variant))];
+ }));
+}
+function sceneImage(scene,index){
+ if(loadedImages.length)return loadedImages[index%loadedImages.length];
+ const kind=sceneKind(scene),key=kind+'-'+index;
+ return photoBackgroundCache[key]||vectorBackgroundCache[key]||null;
+}
+function foregroundImage(scene,index){return vectorForegroundCache[sceneKind(scene)+'-'+index]||null}
 
 function draw(text,index,total,img,progress=1){const p=palette();ctx.clearRect(0,0,720,1280);ctx.fillStyle=p.bg;ctx.fillRect(0,0,720,1280);
 if(img){const scale=Math.max(720/img.width,1280/img.height),w=img.width*scale,h=img.height*scale;ctx.globalAlpha=$('theme').value==='light'?.38:.58;ctx.drawImage(img,(720-w)/2,(1280-h)/2,w,h);ctx.globalAlpha=1;ctx.fillStyle=p.bg;ctx.globalAlpha=.14;ctx.fillRect(0,0,720,1280);ctx.globalAlpha=1}
