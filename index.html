@@ -195,13 +195,14 @@ function palette(){const t=$('theme').value;return t==='light'?{bg:'#f4f0e6',pan
 
 const vectorBackgroundCache={},vectorForegroundCache={},photoBackgroundCache={};
 function sceneKind(text){
- const t=String(text||'').replace(/\s+/g,' ');
+ const t=String(text||'').replace(/[\\s\\u200c]+/g,' ').toLowerCase();
+ // Specific subjects first so a generic word cannot steal the scene category.
  if(/اثر انگشت|جعل|امضا|انگشت|مهر/.test(t))return 'signature';
- if(/ملک|خانه|زمین|سند|مالکیت|خرید|فروش|ارث|وراث|میراث|آپارتمان/.test(t))return 'property';
- if(/قرارداد|مبایعه|تعهد|چک|معامله|اجاره|فسخ/.test(t))return 'contract';
+ if(/خودرو|ماشین|وسیله نقلیه|تصادف|اتومبیل|رانندگی|خرید ماشین/.test(t))return 'car';
+ if(/ملک|خانه|مسکن|زمین|سند|مالکیت|خرید و فروش ملک|آپارتمان|مغازه|عرصه|اعیان|ارث|وراث|میراث|ملکی|مستغلات/.test(t))return 'property';
+ if(/قرارداد|مبایعه|تعهد|چک|معامله|اجاره|فسخ|قولنامه/.test(t))return 'contract';
  if(/خانواده|طلاق|مهریه|نفقه|حضانت|زوج|زوجه|ازدواج/.test(t))return 'family';
  if(/کیفری|جرم|سرقت|کلاهبرداری|ضرب|تهدید|متهم|مجازات/.test(t))return 'criminal';
- if(/خودرو|ماشین|وسیله نقلیه|تصادف|اتومبیل/.test(t))return 'car';
  if(/دادگاه|قاضی|حکم|دادگستری|دادرسی|شکایت|دفاع|پرونده/.test(t))return 'court';
  return 'justice';
 }
@@ -217,9 +218,9 @@ const backgroundPhotoUrls={
 };
 const foregroundVariants={
  property:[
- '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="none"><path d="M75 35h210v175H75zM115 80h130M115 115h130M115 150h90"/><path d="M215 185l60-60 20 20-60 60-25 8z"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" fill="none"><circle cx="180" cy="120" r="75"/><path d="M180 45v150M105 120h150"/><path d="M130 75l100 90M230 75L130 165"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" fill="#c5a45b" fill-opacity=".15"><path d="M55 65h250v155H55z"/><path d="M90 105h180M90 145h130M90 185h95"/></g>'
+ '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".12"><path d="M35 105L180 20l145 85v115H35z"/><path d="M145 220v-75h70v75M75 125h55v45H75zM230 125h55v45h-55z" fill="none"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="none"><path d="M45 105L180 25l135 80v120H45z"/><path d="M145 225v-82h70v82M80 130h45v45H80zM235 130h45v45h-45z"/><path d="M180 25v-15"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="none"><path d="M55 70h250v160H55z"/><path d="M85 105h190M85 145h190M85 185h110"/><path d="M180 15l35 35-35 35-35-35z" fill="#c5a45b" fill-opacity=".2"/></g>'
  ],
  contract:[
  '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M80 35h200v170H80zM115 80h130M115 115h130"/><path d="M115 170q40-45 75 0t70-5" stroke-linecap="round"/></g>',
@@ -247,9 +248,9 @@ const foregroundVariants={
  '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M85 45h190v165H85z"/><path d="M120 90h120M120 130h120M120 170h80"/></g>'
  ],
  car:[
- '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M180 25v190M105 90h150M105 90l-35 65h70zM255 90l-35 65h70z"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" fill="none"><path d="M70 40h220v175H70z"/><path d="M105 80h150M105 120h150M105 160h95"/></g>',
- '<g stroke="#f1d89c" stroke-width="9" fill="none"><circle cx="180" cy="120" r="82"/><circle cx="180" cy="120" r="28"/><path d="M180 38v54M110 160l45-25M250 160l-45-25"/></g>'
+ '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".16"><path d="M55 155l20-62q8-22 32-22h105q22 0 35 22l35 62v50H55z"/><path d="M105 78l-22 65h195l-30-65z" fill="none"/><circle cx="112" cy="205" r="22"/><circle cx="255" cy="205" r="22"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="none"><path d="M45 160l28-68q8-20 32-20h115q25 0 38 22l35 66v42H45z"/><path d="M105 78l-20 62h195l-30-62z"/><circle cx="112" cy="202" r="22"/><circle cx="255" cy="202" r="22"/></g>',
+ '<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".12"><path d="M35 155l28-58q10-22 34-22h130q24 0 36 23l32 57v48H35z"/><path d="M100 78l-22 62h210l-30-62z" fill="none"/><circle cx="105" cy="202" r="22"/><circle cx="260" cy="202" r="22"/></g>'
  ],
  signature:[
  '<g stroke="#f1d89c" stroke-width="9" fill="none"><circle cx="180" cy="120" r="90" stroke-dasharray="7 9"/><path d="M180 55q-65 15-65 70t65 70q65-15 65-70t-65-70zM180 80q-40 15-40 45t40 45q40-15 40-45t-40-45z"/></g>',
@@ -407,7 +408,7 @@ try{
    });
   }
   if(musicGainNode&&narrationElement){
-   narrationElement.onplay=()=>musicGainNode.gain.setTargetAtTime(.32,audioContext.currentTime,.2);
+   narrationElement.onplay=()=>musicGainNode.gain.setTargetAtTime(.78,audioContext.currentTime,.2);
    narrationElement.onended=()=>musicGainNode.gain.setTargetAtTime(1.24,audioContext.currentTime,.35);
   }
  }
@@ -427,7 +428,7 @@ recorder.onerror=e=>{$('status').textContent='خطای ضبط ویدئو: '+(e.e
 recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
 recorder.onstop=()=>{const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(!blob.size){$('status').textContent='فایل ویدئو خالی ساخته شد؛ دوباره با Chrome یا Edge امتحان کن.';rendering=false;$('renderBtn').disabled=false;return}const url=URL.createObjectURL(blob);$('download').href=url;$('download').hidden=false;$('downloadVideoBtn').hidden=false;$('status').textContent='ویدئو آماده شد ('+Math.round(blob.size/1024/1024*10)/10+' مگابایت). برای ذخیره روی «دانلود ویدئو» بزن.';rendering=false;$('renderBtn').disabled=false;stream.getTracks().forEach(t=>t.stop());if(musicElement){musicElement.pause();musicElement.src='';}if(musicObjectUrl)URL.revokeObjectURL(musicObjectUrl);if(narrationElement){narrationElement.pause();narrationElement.src='';}voiceElements.forEach(el=>{el.pause();if(el.src)URL.revokeObjectURL(el.src)});if(musicTimer){clearInterval(musicTimer);musicTimer=null}musicNodes.forEach(n=>{try{if(n.stop)n.stop()}catch(e){}});musicNodes=[];if(audioContext)audioContext.close();if(narrationUrl)URL.revokeObjectURL(narrationUrl)};
 recorder.start(1000);if(musicElement){try{await audioContext.resume();await musicElement.play();$('status').textContent='موسیقی به مسیر صدای ویدئو وصل شد؛ در حال ضبط...'}catch(e){$('status').textContent='پخش موسیقی در ضبط ناموفق بود: '+e.message;try{recorder.stop()}catch(stopError){}return}}const per=Number($('duration').value)*1000;
-for(let i=0;i<s.length;i++){const img=sceneImage(s[i],i),voice=voiceElements[i],start=performance.now();if(voice){voice.currentTime=0;if(musicGainNode)musicGainNode.gain.setTargetAtTime(.065,audioContext.currentTime,.2);await voice.play()}while(performance.now()-start<per||(voice&&!voice.ended)){const progress=Math.min(1,(performance.now()-start)/per);draw(s[i],i,s.length,img,progress);await new Promise(r=>requestAnimationFrame(r))}if(voice&&musicGainNode)musicGainNode.gain.setTargetAtTime(.34,audioContext.currentTime,.25)}
+for(let i=0;i<s.length;i++){const img=sceneImage(s[i],i),voice=voiceElements[i],start=performance.now();if(voice){voice.currentTime=0;if(musicGainNode)musicGainNode.gain.setTargetAtTime(.78,audioContext.currentTime,.2);await voice.play()}while(performance.now()-start<per||(voice&&!voice.ended)){const progress=Math.min(1,(performance.now()-start)/per);draw(s[i],i,s.length,img,progress);await new Promise(r=>requestAnimationFrame(r))}if(voice&&musicGainNode)musicGainNode.gain.setTargetAtTime(1.24,audioContext.currentTime,.25)}
 if(narrationElement){while(!narrationElement.ended){draw(s[s.length-1],s.length-1,s.length,sceneImage(s[s.length-1],s.length-1),1);await new Promise(r=>requestAnimationFrame(r))}}
 if(musicElement)musicElement.pause();if(narrationElement)narrationElement.pause();if(musicTimer){clearInterval(musicTimer);musicTimer=null}recorder.stop()};
 // خطاهای پیش‌بینی‌نشده را به‌جای بی‌واکنش ماندن دکمه، در صفحه نشان بده.
