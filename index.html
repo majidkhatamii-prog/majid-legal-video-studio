@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123c35">
+<title>استودیوی ویدئوی حقوقی مجید خاتمی</title>
+<style>
+:root{--g:#123c35;--g2:#1c6555;--gold:#c5a45b;--paper:#f6f3eb;--ink:#202725;--muted:#68736d;--line:#e5e0d5}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:Tahoma,Arial,sans-serif}
+header{background:var(--g);color:#fff;padding:24px max(5vw,18px);border-bottom:4px solid var(--gold)}
+h1{font-size:clamp(22px,4vw,32px);margin:0 0 8px}header p{margin:0;color:#e7e1d2;line-height:1.9}
+main{max-width:1150px;margin:24px auto;padding:0 16px;display:grid;grid-template-columns:minmax(280px,.95fr) minmax(300px,1.05fr);gap:20px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 5px 20px #17241d0b}
+h2{font-size:18px;margin:0 0 14px;color:var(--g)}label{display:block;font-weight:bold;font-size:13px;margin:13px 0 7px}
+textarea,input,select{width:100%;border:1px solid #d5d2c9;border-radius:9px;padding:11px;font:14px Tahoma;direction:rtl;background:#fff}
+textarea{min-height:180px;line-height:1.9;resize:vertical}input[type=file]{font-size:12px}
+.hint{font-size:12px;color:var(--muted);line-height:1.9}
+button{border:0;border-radius:9px;padding:11px 16px;background:var(--g);color:#fff;font:bold 14px Tahoma;cursor:pointer;margin:8px 5px 0 0}
+button.alt{background:#e9e4d7;color:var(--g)}button:disabled{opacity:.5;cursor:not-allowed}
+.preview{background:#171b19;border-radius:12px;display:flex;justify-content:center;padding:12px}
+canvas{width:min(100%,360px);height:auto;aspect-ratio:9/16;background:#101d1a;border-radius:5px}
+.status{font-size:13px;line-height:1.9;margin-top:12px;color:#435149;min-height:28px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+a#download{display:inline-block;margin:12px;color:var(--g);font-weight:bold}
+footer{text-align:center;color:#68716a;font-size:11px;padding:10px 15px 25px}
+@media(max-width:760px){main{grid-template-columns:1fr}.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><h1>استودیوی ویدئوی حقوقی مجید خاتمی</h1><p>ساخت ویدئوی عمودی برای اینستاگرام؛ متن متحرک، تصویر و موسیقی، بدون چهره و بدون گوینده</p></header>
+<main>
+<section class="panel">
+<h2>۱. محتوای ویدئو</h2>
+<label for="headline">عنوان کوتاه ویدئو</label>
+<input id="headline" value="یک نکته مهم حقوقی">
+<label for="script">سناریو (هر صحنه در یک خط جداگانه)</label>
+<textarea id="script">قبل از خرید ملک، فقط به قول فروشنده اکتفا نکنید.
+وضعیت ثبتی و مالکیت ملک را بررسی کنید.
+مبایعه‌نامه باید دقیق و بدون ابهام تنظیم شود.
+برای پیشگیری از اختلاف، پیش از امضا مشاوره حقوقی بگیرید.</textarea>
+<label for="images">تصاویر دلخواه (اختیاری؛ به ترتیب صحنه‌ها)</label><input id="images" type="file" accept="image/*" multiple>
+<p class="hint">اگر تعداد تصاویر کمتر از صحنه‌ها باشد، تصاویر به ترتیب تکرار می‌شوند. در صورت نداشتن تصویر، پس‌زمینه گرافیکی ساخته می‌شود.</p>
+<label for="music">موسیقی پس‌زمینه (اختیاری)</label><input id="music" type="file" accept="audio/*">
+<div class="row">
+<div><label for="duration">مدت هر صحنه</label><select id="duration"><option value="3">۳ ثانیه</option><option value="4" selected>۴ ثانیه</option><option value="5">۵ ثانیه</option><option value="6">۶ ثانیه</option><option value="7">۷ ثانیه</option></select></div>
+<div><label for="theme">قالب گرافیکی</label><select id="theme"><option value="classic">سرمه‌ای و طلایی</option><option value="light">روشن و رسمی</option><option value="minimal">مینیمال تیره</option></select></div>
+</div>
+<button id="previewBtn">پیش‌نمایش</button><button id="renderBtn">ساخت ویدئو</button>
+<div class="status" id="status" role="status">آماده دریافت سناریو.</div>
+<p class="hint">خروجی فعلی WebM است. در Chrome یا Edge اجرا کنید. فایل‌ها در همین مرورگر پردازش می‌شوند و به سرور ارسال نمی‌شوند.</p>
+</section>
+<section class="panel">
+<h2>۲. پیش‌نمایش و دریافت</h2>
+<div class="preview"><canvas id="screen" width="720" height="1280"></canvas></div>
+<button class="alt" id="stopBtn" disabled>توقف پیش‌نمایش</button>
+<a id="download" hidden download="majid-khatami-legal-video.webm">دریافت ویدئوی ساخته‌شده</a>
+<p class="hint">ویدئو عمودی ۹:۱۶ و مناسب ریلز است. پیش از انتشار، متن حقوقی، تصاویر و مجوز استفاده از موسیقی را بررسی کنید.</p>
+</section>
+</main>
+<footer>استودیوی آزمایشی محلی مجید خاتمی</footer>
+<script>
+const canvas=document.getElementById('screen'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+let timer=null,loadedImages=[],imageUrls=[],rendering=false,animationFrame=0;
+function scenes(){return $('script').value.split(/\n+/).map(x=>x.trim()).filter(Boolean)}
+function wrap(text,max){const words=text.split(/\s+/),lines=[];let line='';for(const w of words){const test=line?line+' '+w:w;if(ctx.measureText(test).width>max&&line){lines.push(line);line=w}else line=test}if(line)lines.push(line);return lines}
+function palette(){const t=$('theme').value;return t==='light'?{bg:'#f4f0e6',panel:'#fffdf8',ink:'#173c35',gold:'#a27b32',muted:'#5c6b64'}:t==='minimal'?{bg:'#111816',panel:'#1c2924',ink:'#f7f3e9',gold:'#d1ad65',muted:'#b7c1ba'}:{bg:'#10251f',panel:'#18382f',ink:'#f6f1e5',gold:'#c5a45b',muted:'#c2cbc5'}}
+function draw(text,index,total,img,progress=1){const p=palette();ctx.clearRect(0,0,720,1280);ctx.fillStyle=p.bg;ctx.fillRect(0,0,720,1280);
+if(img){const scale=Math.max(720/img.width,1280/img.height),w=img.width*scale,h=img.height*scale;ctx.globalAlpha=$('theme').value==='light'?.18:.25;ctx.drawImage(img,(720-w)/2,(1280-h)/2,w,h);ctx.globalAlpha=1;ctx.fillStyle=p.bg;ctx.globalAlpha=.45;ctx.fillRect(0,0,720,1280);ctx.globalAlpha=1}
+ctx.fillStyle=p.gold;ctx.fillRect(70,100,580,5);ctx.fillStyle=p.ink;ctx.textAlign='center';ctx.direction='rtl';ctx.font='bold 29px Tahoma';ctx.fillText($('headline').value.trim()||'نکته حقوقی',360,174);
+ctx.fillStyle=p.panel;ctx.beginPath();ctx.roundRect(54,350,612,560,26);ctx.fill();
+ctx.fillStyle=p.ink;ctx.font='bold 43px Tahoma';let lines=wrap(text,520);while(lines.length>7){ctx.font='bold 37px Tahoma';lines=wrap(text,550);break}const lineH=70,start=630-(lines.length*lineH)/2;lines.forEach((line,i)=>ctx.fillText(line,360,start+i*lineH));
+ctx.fillStyle=p.gold;ctx.fillRect(70,1100,580,3);ctx.fillStyle=p.ink;ctx.font='bold 24px Tahoma';ctx.fillText('مجید خاتمی',360,1150);ctx.fillStyle=p.muted;ctx.font='20px Tahoma';ctx.fillText('خدمات حقوقی و مشاوره در شهرضا',360,1190);
+ctx.fillStyle=p.muted;ctx.font='18px Tahoma';ctx.fillText((index+1)+' / '+total,360,1235);
+ctx.fillStyle=p.gold;ctx.fillRect(70,1260,580*(index+progress)/total,5)}
+async function loadImages(){imageUrls.forEach(URL.revokeObjectURL);imageUrls=[];loadedImages=[];for(const f of $('images').files){if(!f.type.startsWith('image/'))continue;const u=URL.createObjectURL(f),im=new Image();im.src=u;await im.decode();imageUrls.push(u);loadedImages.push(im)}}
+function stop(){if(timer){clearInterval(timer);timer=null}$('stopBtn').disabled=true}
+async function play(){stop();await loadImages();const s=scenes();if(!s.length){$('status').textContent='ابتدا سناریو را وارد کنید.';return}let i=0;const d=Number($('duration').value)*1000;draw(s[0],0,s.length,loadedImages[0]);timer=setInterval(()=>{i=(i+1)%s.length;draw(s[i],i,s.length,loadedImages[i%Math.max(loadedImages.length,1)])},d);$('stopBtn').disabled=false;$('status').textContent='پیش‌نمایش در حال پخش است.'}
+$('previewBtn').onclick=play;$('stopBtn').onclick=()=>{stop();$('status').textContent='پیش‌نمایش متوقف شد.'};
+$('renderBtn').onclick=async()=>{if(rendering)return;const s=scenes();if(!s.length){$('status').textContent='سناریو خالی است.';return}if(!canvas.captureStream||!window.MediaRecorder){$('status').textContent='ضبط ویدئو در این مرورگر پشتیبانی نمی‌شود؛ Chrome یا Edge به‌روز را امتحان کنید.';return}
+stop();rendering=true;$('renderBtn').disabled=true;$('download').hidden=true;$('status').textContent='در حال آماده‌سازی تصاویر و موسیقی...';await loadImages();
+const fps=30,stream=canvas.captureStream(fps),chunks=[];let audioContext=null,audioElement=null,audioUrl=null;
+try{const musicFile=$('music').files[0];if(musicFile){audioContext=new(window.AudioContext||window.webkitAudioContext)();await audioContext.resume();audioElement=new Audio();audioUrl=URL.createObjectURL(musicFile);audioElement.src=audioUrl;audioElement.loop=true;audioElement.volume=.7;const source=audioContext.createMediaElementSource(audioElement),dest=audioContext.createMediaStreamDestination();source.connect(dest);source.connect(audioContext.destination);dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));await audioElement.play()}}
+catch(e){$('status').textContent='موسیقی پخش نشد؛ ویدئو بدون موسیقی ساخته می‌شود.'}
+let recorder;try{recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp9,opus'})}catch(e){try{recorder=new MediaRecorder(stream,{mimeType:'video/webm'})}catch(err){recorder=new MediaRecorder(stream)}}
+recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
+recorder.onstop=()=>{const blob=new Blob(chunks,{type:'video/webm'}),url=URL.createObjectURL(blob);$('download').href=url;$('download').hidden=false;$('status').textContent='ویدئو آماده شد؛ روی «دریافت ویدئوی ساخته‌شده» بزن.';rendering=false;$('renderBtn').disabled=false;stream.getTracks().forEach(t=>t.stop());if(audioElement){audioElement.pause();audioElement.src='';}if(audioContext)audioContext.close();if(audioUrl)URL.revokeObjectURL(audioUrl)};
+recorder.start();const per=Number($('duration').value)*1000;
+for(let i=0;i<s.length;i++){const img=loadedImages.length?loadedImages[i%loadedImages.length]:null;const start=performance.now();while(performance.now()-start<per){const progress=Math.min(1,(performance.now()-start)/per);draw(s[i],i,s.length,img,progress);await new Promise(r=>requestAnimationFrame(r))}}
+if(audioElement)audioElement.pause();recorder.stop()};
+draw('سناریوی حقوقی خود را وارد کنید',0,1,null);
+</script>
+</body></html>
