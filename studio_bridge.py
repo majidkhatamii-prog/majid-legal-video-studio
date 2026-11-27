@@ -8,7 +8,6 @@ import subprocess
 import sys
 import tempfile
 import re
-import os
 
 ROOT = Path(__file__).resolve().parent
 CLI = ROOT / "cli.py"
