@@ -152,7 +152,7 @@ try{
  $('onlineMusicStatus').textContent=items.length+' فایل صوتی با مجوز آزاد پیدا شد. انتخاب کن تا دریافت شود.';
 }catch(e){$('onlineMusicStatus').textContent='خطا در جست‌وجو: '+e.message}finally{$('searchOnlineMusic').disabled=false}}
 async function previewOnlineMusic(item,button){const player=$('onlineMusicPlayer');try{player.pause();player.removeAttribute('src');player.load();player.src=item.url;player.hidden=false;$('onlineMusicStatus').textContent='در حال پخش نمونه: '+item.title;await player.play()}catch(e){$('onlineMusicStatus').textContent='پخش مستقیم ممکن نشد. لینک صفحه منبع را باز کن؛ اگر آنجا پخش شد، مشکل از محدودیت مرورگر در این سایت است.'}}
-async function fetchMusicFile(url,timeoutMs=90000){
+async function fetchMusicFile(url,timeoutMs=30000){
  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
  try{
   const res=await fetch(url,{mode:'cors',cache:'no-store',signal:controller.signal});
@@ -180,9 +180,9 @@ async function selectOnlineMusic(item,button,rowStatus){
   const success='آهنگ کامل دریافت و برای ویدئو انتخاب شد: '+item.title;
   rowStatus.textContent=success;$('onlineMusicStatus').textContent=success+' | '+item.license+' | سازنده: '+item.artist+'. اکنون می‌توانی ویدئو بسازی.';
  }catch(e){
-  const message=e.name==='AbortError'?'دریافت بیش از ۹۰ ثانیه طول کشید و متوقف شد.':e.message;
+  const message=e.name==='AbortError'?'دریافت بیش از ۳۰ ثانیه طول کشید و متوقف شد.':e.message;
   rowStatus.textContent='دریافت خودکار ناموفق بود: '+message;
-  $('onlineMusicStatus').textContent='این فایل از داخل مرورگر قابل دریافت نبود. از «صفحه و مجوز» فایل را در منبع باز کن و در صورت دانلود، از بخش «فایل موسیقی از کامپیوتر» بارگذاری کن. علت: '+message;
+  $('onlineMusicStatus').textContent='دریافت خودکار این آهنگ در ۳۰ ثانیه انجام نشد. روی «صفحه و مجوز» بزن، فایل را از همان منبع روی کامپیوتر دانلود کن و سپس از بخش «فایل موسیقی از کامپیوتر» بارگذاری کن. علت: '+message;
  }finally{button.disabled=false;button.textContent='استفاده در ویدئو'}
 }
 $('searchOnlineMusic').addEventListener('click',searchOnlineMusic);$('musicCategory').addEventListener('change',searchOnlineMusic);
