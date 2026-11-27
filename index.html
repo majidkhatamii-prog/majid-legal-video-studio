@@ -182,17 +182,74 @@ if(!$('narration').files[0]&&$('autoNarration').checked){
   catch(e){$('status').textContent='ساخت گویندگی ناموفق بود: '+e.message;rendering=false;$('renderBtn').disabled=false;return}
 }
 $('status').textContent='در حال آماده‌سازی تصاویر و موسیقی...';await loadImages();
-const fps=30,stream=canvas.captureStream(fps),chunks=[];let audioContext=null,audioElement=null,audioUrl=null,narrationElement=null,narrationUrl=null,musicGainNode=null,voiceElements=[];
-try{const musicMode=$('musicMode').value,musicFile=$('music').files[0],voiceFile=$('narration').files[0],voiceBlobs=Array.isArray(autoNarrationBlob)?autoNarrationBlob:null,chosenMusic=musicMode==='online'?onlineMusicBlob:(musicMode==='upload'?musicFile:null);if(chosenMusic||voiceFile||voiceBlobs){audioContext=new(window.AudioContext||window.webkitAudioContext)();await audioContext.resume();const dest=audioContext.createMediaStreamDestination();dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));if(chosenMusic){const raw=await chosenMusic.arrayBuffer();const musicBuffer=await audioContext.decodeAudioData(raw.slice(0));audioElement=audioContext.createBufferSource();audioElement.buffer=musicBuffer;audioElement.loop=true;musicGainNode=audioContext.createGain();musicGainNode.gain.value=.30;audioElement.connect(musicGainNode);musicGainNode.connect(dest);musicGainNode.connect(audioContext.destination)}if(voiceFile){narrationElement=new Audio();narrationUrl=URL.createObjectURL(voiceFile);narrationElement.src=narrationUrl;const voiceSource=audioContext.createMediaElementSource(narrationElement),voiceGain=audioContext.createGain();voiceGain.gain.value=1;voiceSource.connect(voiceGain);voiceGain.connect(dest);voiceGain.connect(audioContext.destination);await narrationElement.play()}if(voiceBlobs){voiceElements=voiceBlobs.map(blob=>{const el=new Audio();el.src=URL.createObjectURL(blob);const source=audioContext.createMediaElementSource(el),gain=audioContext.createGain();gain.gain.value=1;source.connect(gain);gain.connect(dest);gain.connect(audioContext.destination);return el})}if(musicGainNode&&narrationElement){narrationElement.onplay=()=>musicGainNode.gain.setTargetAtTime(.065,audioContext.currentTime,.2);narrationElement.onended=()=>musicGainNode.gain.setTargetAtTime(.30,audioContext.currentTime,.35)}}}
-catch(e){$('status').textContent='صدای موسیقی یا گویندگی پخش نشد: '+e.message;if(narrationElement){narrationElement.pause();narrationElement=null}if(audioElement){audioElement.pause();audioElement=null}}
+const fps=30,stream=canvas.captureStream(fps),chunks=[];let audioContext=null,musicElement=null,musicObjectUrl=null,narrationElement=null,narrationUrl=null,musicGainNode=null,voiceElements=[];
+try{
+ const musicMode=$('musicMode').value,musicFile=$('music').files[0],voiceFile=$('narration').files[0],voiceBlobs=Array.isArray(autoNarrationBlob)?autoNarrationBlob:null;
+ const chosenMusic=musicMode==='online'?onlineMusicBlob:(musicMode==='upload'?musicFile:null);
+ if(chosenMusic||voiceFile||voiceBlobs){
+  audioContext=new(window.AudioContext||window.webkitAudioContext)();
+  await audioContext.resume();
+  const audioDestination=audioContext.createMediaStreamDestination();
+  audioDestination.stream.getAudioTracks().forEach(track=>stream.addTrack(track));
+  if(chosenMusic){
+   // Use an HTML audio element backed by the already-downloaded local Blob.
+   // This avoids decodeAudioData failures and routes the exact previewed file into the recorded stream.
+   musicObjectUrl=URL.createObjectURL(chosenMusic);
+   musicElement=new Audio();
+   musicElement.src=musicObjectUrl;
+   musicElement.preload='auto';
+   musicElement.loop=true;
+   const musicSource=audioContext.createMediaElementSource(musicElement);
+   musicGainNode=audioContext.createGain();
+   musicGainNode.gain.value=.30;
+   musicSource.connect(musicGainNode);
+   musicGainNode.connect(audioDestination);
+   musicElement.load();
+  }
+  if(voiceFile){
+   narrationElement=new Audio();
+   narrationUrl=URL.createObjectURL(voiceFile);
+   narrationElement.src=narrationUrl;
+   const voiceSource=audioContext.createMediaElementSource(narrationElement),voiceGain=audioContext.createGain();
+   voiceGain.gain.value=1;
+   voiceSource.connect(voiceGain);
+   voiceGain.connect(audioDestination);
+  }
+  if(voiceBlobs){
+   voiceElements=voiceBlobs.map(blob=>{
+    const el=new Audio();
+    el.src=URL.createObjectURL(blob);
+    const source=audioContext.createMediaElementSource(el),gain=audioContext.createGain();
+    gain.gain.value=1;
+    source.connect(gain);
+    gain.connect(audioDestination);
+    return el;
+   });
+  }
+  if(musicGainNode&&narrationElement){
+   narrationElement.onplay=()=>musicGainNode.gain.setTargetAtTime(.075,audioContext.currentTime,.2);
+   narrationElement.onended=()=>musicGainNode.gain.setTargetAtTime(.30,audioContext.currentTime,.35);
+  }
+ }
+}catch(e){
+ $('status').textContent='آماده‌سازی صدای موسیقی/گویندگی ناموفق بود: '+e.message+'؛ ضبط متوقف شد تا ویدئوی بی‌صدا ساخته نشود.';
+ if(musicElement){musicElement.pause();musicElement.src='';}
+ if(narrationElement){narrationElement.pause();narrationElement.src='';}
+ voiceElements.forEach(el=>{el.pause();el.src='';});
+ stream.getTracks().forEach(track=>track.stop());
+ if(audioContext)try{await audioContext.close()}catch(closeError){}
+ rendering=false;
+ $('renderBtn').disabled=false;
+ return;
+}
 let recorder;const mimeCandidates=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];const chosenMime=mimeCandidates.find(type=>MediaRecorder.isTypeSupported(type));try{recorder=chosenMime?new MediaRecorder(stream,{mimeType:chosenMime}):new MediaRecorder(stream)}catch(e){$('status').textContent='مرورگر نتوانست ضبط ویدئو را آغاز کند: '+e.message;rendering=false;$('renderBtn').disabled=false;stream.getTracks().forEach(t=>t.stop());if(audioContext)audioContext.close();return}
 recorder.onerror=e=>{$('status').textContent='خطای ضبط ویدئو: '+(e.error?.message||'خطای MediaRecorder');rendering=false;$('renderBtn').disabled=false};
 recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
-recorder.onstop=()=>{const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(!blob.size){$('status').textContent='فایل ویدئو خالی ساخته شد؛ دوباره با Chrome یا Edge امتحان کن.';rendering=false;$('renderBtn').disabled=false;return}const url=URL.createObjectURL(blob);$('download').href=url;$('download').hidden=false;$('downloadVideoBtn').hidden=false;$('status').textContent='ویدئو آماده شد ('+Math.round(blob.size/1024/1024*10)/10+' مگابایت). برای ذخیره روی «دانلود ویدئو» بزن.';rendering=false;$('renderBtn').disabled=false;stream.getTracks().forEach(t=>t.stop());if(audioElement){try{audioElement.stop()}catch(e){}}if(narrationElement){narrationElement.pause();narrationElement.src='';}voiceElements.forEach(el=>{el.pause();if(el.src)URL.revokeObjectURL(el.src)});if(musicTimer){clearInterval(musicTimer);musicTimer=null}musicNodes.forEach(n=>{try{if(n.stop)n.stop()}catch(e){}});musicNodes=[];if(audioContext)audioContext.close();if(audioUrl)URL.revokeObjectURL(audioUrl);if(narrationUrl)URL.revokeObjectURL(narrationUrl)};
-recorder.start(1000);if(audioElement){try{audioElement.start(0)}catch(e){$('status').textContent='موسیقی انتخاب شد اما شروع پخش ناموفق بود: '+e.message}}const per=Number($('duration').value)*1000;
+recorder.onstop=()=>{const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(!blob.size){$('status').textContent='فایل ویدئو خالی ساخته شد؛ دوباره با Chrome یا Edge امتحان کن.';rendering=false;$('renderBtn').disabled=false;return}const url=URL.createObjectURL(blob);$('download').href=url;$('download').hidden=false;$('downloadVideoBtn').hidden=false;$('status').textContent='ویدئو آماده شد ('+Math.round(blob.size/1024/1024*10)/10+' مگابایت). برای ذخیره روی «دانلود ویدئو» بزن.';rendering=false;$('renderBtn').disabled=false;stream.getTracks().forEach(t=>t.stop());if(musicElement){musicElement.pause();musicElement.src='';}if(musicObjectUrl)URL.revokeObjectURL(musicObjectUrl);if(narrationElement){narrationElement.pause();narrationElement.src='';}voiceElements.forEach(el=>{el.pause();if(el.src)URL.revokeObjectURL(el.src)});if(musicTimer){clearInterval(musicTimer);musicTimer=null}musicNodes.forEach(n=>{try{if(n.stop)n.stop()}catch(e){}});musicNodes=[];if(audioContext)audioContext.close();if(narrationUrl)URL.revokeObjectURL(narrationUrl)};
+recorder.start(1000);if(musicElement){try{await audioContext.resume();await musicElement.play();$('status').textContent='موسیقی به مسیر صدای ویدئو وصل شد؛ در حال ضبط...'}catch(e){$('status').textContent='پخش موسیقی در ضبط ناموفق بود: '+e.message;try{recorder.stop()}catch(stopError){}return}}const per=Number($('duration').value)*1000;
 for(let i=0;i<s.length;i++){const img=loadedImages.length?loadedImages[i%loadedImages.length]:null,voice=voiceElements[i],start=performance.now();if(voice){voice.currentTime=0;if(musicGainNode)musicGainNode.gain.setTargetAtTime(.065,audioContext.currentTime,.2);await voice.play()}while(performance.now()-start<per||(voice&&!voice.ended)){const progress=Math.min(1,(performance.now()-start)/per);draw(s[i],i,s.length,img,progress);await new Promise(r=>requestAnimationFrame(r))}if(voice&&musicGainNode)musicGainNode.gain.setTargetAtTime(.30,audioContext.currentTime,.25)}
 if(narrationElement){while(!narrationElement.ended){draw(s[s.length-1],s.length-1,s.length,loadedImages.length?loadedImages[(s.length-1)%loadedImages.length]:null,1);await new Promise(r=>requestAnimationFrame(r))}}
-if(audioElement)audioElement.pause();if(narrationElement)narrationElement.pause();if(musicTimer){clearInterval(musicTimer);musicTimer=null}recorder.stop()};
+if(musicElement)musicElement.pause();if(narrationElement)narrationElement.pause();if(musicTimer){clearInterval(musicTimer);musicTimer=null}recorder.stop()};
 // خطاهای پیش‌بینی‌نشده را به‌جای بی‌واکنش ماندن دکمه، در صفحه نشان بده.
 window.addEventListener('unhandledrejection',event=>{
   const message=event.reason&&(event.reason.message||String(event.reason))||'خطای نامشخص';
