@@ -151,7 +151,7 @@ async function loadImages(){imageUrls.forEach(URL.revokeObjectURL);imageUrls=[];
 function stop(){if(timer){clearInterval(timer);timer=null}$('stopBtn').disabled=true}
 async function play(){try{stop();$('status').textContent='در حال آماده‌سازی پیش‌نمایش...';await loadImages();const s=scenes();if(!s.length){$('status').textContent='ابتدا سناریو را وارد کنید.';return}let i=0;const d=Number($('duration').value)*1000;draw(s[0],0,s.length,loadedImages[0]||null);timer=setInterval(()=>{i=(i+1)%s.length;draw(s[i],i,s.length,loadedImages.length?loadedImages[i%loadedImages.length]:null)},d);$('stopBtn').disabled=false;$('status').textContent='پیش‌نمایش در حال پخش است.'}catch(e){stop();$('status').textContent='خطا در پیش‌نمایش: '+(e.message||e)}}
 $('previewBtn').onclick=()=>{play().catch(e=>{$('status').textContent='خطا در پیش‌نمایش: '+(e.message||e)})};$('stopBtn').onclick=()=>{stop();$('status').textContent='پیش‌نمایش متوقف شد.'};
-$('renderBtn').onclick=async()=>{if(rendering)return;const s=scenes();if(!s.length){$('status').textContent='سناریو خالی است.';return}if($('musicMode').value==='upload'&&!$('music').files[0]){$('status').textContent='ابتدا یک موسیقی MP3 از Mixkit دانلود و در قسمت انتخاب فایل موسیقی بارگذاری کنید.';return}if(!canvas.captureStream||!window.MediaRecorder){$('status').textContent='ضبط ویدئو در این مرورگر پشتیبانی نمی‌شود؛ Chrome یا Edge به‌روز را امتحان کنید.';return}
+$('renderBtn').onclick=async()=>{if(rendering)return;const s=scenes();if(!s.length){$('status').textContent='سناریو خالی است.';return}// موسیقی اختیاری است؛ نبودن فایل موسیقی نباید مانع ساخت ویدئو شود.if(!canvas.captureStream||!window.MediaRecorder){$('status').textContent='ضبط ویدئو در این مرورگر پشتیبانی نمی‌شود؛ Chrome یا Edge به‌روز را امتحان کنید.';return}
 stop();rendering=true;$('renderBtn').disabled=true;$('download').hidden=true;
 let autoNarrationBlob=null;
 if(!$('narration').files[0]&&$('autoNarration').checked){
@@ -170,6 +170,16 @@ recorder.start();const per=Number($('duration').value)*1000;
 for(let i=0;i<s.length;i++){const img=loadedImages.length?loadedImages[i%loadedImages.length]:null,voice=voiceElements[i],start=performance.now();if(voice){voice.currentTime=0;if(musicGainNode)musicGainNode.gain.setTargetAtTime(.055,audioContext.currentTime,.2);await voice.play()}while(performance.now()-start<per||(voice&&!voice.ended)){const progress=Math.min(1,(performance.now()-start)/per);draw(s[i],i,s.length,img,progress);await new Promise(r=>requestAnimationFrame(r))}if(voice&&musicGainNode)musicGainNode.gain.setTargetAtTime(.24,audioContext.currentTime,.25)}
 if(narrationElement){while(!narrationElement.ended){draw(s[s.length-1],s.length-1,s.length,loadedImages.length?loadedImages[(s.length-1)%loadedImages.length]:null,1);await new Promise(r=>requestAnimationFrame(r))}}
 if(audioElement)audioElement.pause();if(narrationElement)narrationElement.pause();if(musicTimer){clearInterval(musicTimer);musicTimer=null}recorder.stop()};
+// خطاهای پیش‌بینی‌نشده را به‌جای بی‌واکنش ماندن دکمه، در صفحه نشان بده.
+window.addEventListener('unhandledrejection',event=>{
+  const message=event.reason&&(event.reason.message||String(event.reason))||'خطای نامشخص';
+  $('status').textContent='ساخت ویدئو متوقف شد: '+message;
+  rendering=false;$('renderBtn').disabled=false;
+});
+window.addEventListener('error',event=>{
+  if($('status'))$('status').textContent='خطای برنامه: '+(event.message||'خطای جاوااسکریپت');
+  rendering=false;if($('renderBtn'))$('renderBtn').disabled=false;
+});
 showImageOrder();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>draw('سناریوی حقوقی خود را وارد کنید',0,1,null));else draw('سناریوی حقوقی خود را وارد کنید',0,1,null);
 </script>
 </body></html>
