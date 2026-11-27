@@ -275,16 +275,14 @@ function cachePhoto(key,url){
  return new Promise(resolve=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>{photoBackgroundCache[key]=im;resolve(im)};im.onerror=()=>resolve(null);im.src=url});
 }
 async function preloadVectorArt(sceneList){
- await Promise.all(sceneList.flatMap((scene,index)=>{
-  const kind=sceneKind(scene),variant=index%3,key=kind+'-'+index;
-  const urls=backgroundPhotoUrls[kind]||backgroundPhotoUrls.justice;
-  return [cachePhoto(key,urls[variant]),cacheVectorImage(vectorForegroundCache,key,foregroundSvg(kind,(index+1)%3)),cacheVectorImage(vectorBackgroundCache,key,fallbackBackgroundSvg(kind,variant))];
+ await Promise.all(sceneList.map((scene,index)=>{
+  const kind=sceneKind(scene),key=kind+'-'+index;
+  return cacheVectorImage(vectorForegroundCache,key,foregroundSvg(kind,(index+1)%3));
  }));
 }
 function sceneImage(scene,index){
  if(loadedImages.length)return loadedImages[index%loadedImages.length];
- const kind=sceneKind(scene),key=kind+'-'+index;
- return photoBackgroundCache[key]||vectorBackgroundCache[key]||null;
+ return null;
 }
 function foregroundImage(scene,index){return vectorForegroundCache[sceneKind(scene)+'-'+index]||null}
 
@@ -331,7 +329,7 @@ try{
    musicElement.loop=true;
    const musicSource=audioContext.createMediaElementSource(musicElement);
    musicGainNode=audioContext.createGain();
-   musicGainNode.gain.value=.62;
+   musicGainNode.gain.value=1.24;
    musicSource.connect(musicGainNode);
    musicGainNode.connect(audioDestination);
    musicElement.load();
@@ -357,8 +355,8 @@ try{
    });
   }
   if(musicGainNode&&narrationElement){
-   narrationElement.onplay=()=>musicGainNode.gain.setTargetAtTime(.16,audioContext.currentTime,.2);
-   narrationElement.onended=()=>musicGainNode.gain.setTargetAtTime(.62,audioContext.currentTime,.35);
+   narrationElement.onplay=()=>musicGainNode.gain.setTargetAtTime(.32,audioContext.currentTime,.2);
+   narrationElement.onended=()=>musicGainNode.gain.setTargetAtTime(1.24,audioContext.currentTime,.35);
   }
  }
 }catch(e){
