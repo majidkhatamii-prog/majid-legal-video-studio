@@ -58,15 +58,15 @@ footer{text-align:center;color:#77808d;font-size:11px;padding:14px 15px 28px}.no
 <div><label for="duration">مدت هر صحنه</label><select id="duration"><option value="3">۳ ثانیه</option><option value="4" selected>۴ ثانیه</option><option value="5">۵ ثانیه</option><option value="6">۶ ثانیه</option><option value="7">۷ ثانیه</option></select></div>
 <div><label for="theme">قالب گرافیکی</label><select id="theme"><option value="classic">سرمه‌ای و طلایی</option><option value="light">روشن و رسمی</option><option value="minimal">مینیمال تیره</option><option value="cinema">سینمایی سرمه‌ای</option></select></div>
 </div>
-<button id="previewBtn">پیش‌نمایش</button><button id="renderBtn">ساخت ویدئو</button>
+<button id="previewBtn">پیش‌نمایش</button><button id="renderBtn">ساخت ویدئو</button><button type="button" class="alt" id="convertMp4Btn" disabled>تبدیل به MP4</button>
 <div class="status" id="status" role="status">آماده دریافت سناریو.</div>
-<div class="note"><strong>نکته:</strong> برای گویندگی خودکار باید اتصال محلی Sedabot برقرار باشد. در غیر این صورت می‌توانی فایل WAV یا MP3 آماده بارگذاری کنی.</div><p class="hint">ویدئو ابتدا با فرمت سریع WebM ساخته می‌شود؛ سپس می‌توانید آن را در همین صفحه به MP4 مناسب استوری اینستاگرام تبدیل کنید. تبدیل روی دستگاه شما انجام می‌شود.</p>
+<div class="note"><strong>نکته:</strong> برای گویندگی خودکار باید اتصال محلی Sedabot برقرار باشد. در غیر این صورت می‌توانی فایل WAV یا MP3 آماده بارگذاری کنی.</div><p class="hint">پس از پایان ساخت ویدئو، دکمه «تبدیل به MP4» فعال می‌شود. برای دریافت نسخه مناسب استوری، همان دکمه را بزن.</p>
 </section>
 <section class="panel">
 <h2>۲. پیش‌نمایش و دریافت</h2>
 <div class="preview"><canvas id="screen" width="720" height="1280"></canvas></div>
 <button class="alt" id="stopBtn" disabled>توقف پیش‌نمایش</button>
-<a id="download" hidden download="majid-khatami-legal-video.webm">دریافت نسخه WebM</a><button type="button" class="alt" id="downloadVideoBtn" hidden>دانلود نسخه WebM</button><button type="button" class="alt" id="convertMp4Btn" disabled>ابتدا ویدئو را بسازید؛ سپس تبدیل به MP4</button><a id="mp4Download" hidden download="majid-khatami-story.mp4">دانلود MP4 مخصوص استوری</a>
+<a id="download" hidden download="majid-khatami-legal-video.webm">دریافت نسخه WebM</a><button type="button" class="alt" id="downloadVideoBtn" hidden>دانلود نسخه WebM</button><a id="mp4Download" hidden download="majid-khatami-story.mp4">دانلود MP4 مخصوص استوری</a>
 <p class="hint">ویدئو عمودی ۹:۱۶ و مناسب ریلز است. پیش از انتشار، متن حقوقی، تصاویر و مجوز استفاده از موسیقی را بررسی کنید.</p>
 </section>
 </main>
@@ -412,7 +412,7 @@ $('convertMp4Btn').onclick=async()=>{
  }finally{btn.disabled=false}
 };
 $('renderBtn').onclick=async()=>{if(rendering)return;const s=scenes();if(!s.length){$('status').textContent='سناریو خالی است.';return}// موسیقی اختیاری است؛ نبودن فایل موسیقی نباید مانع ساخت ویدئو شود.if(!canvas.captureStream||!window.MediaRecorder){$('status').textContent='ضبط ویدئو در این مرورگر پشتیبانی نمی‌شود؛ Chrome یا Edge به‌روز را امتحان کنید.';return}
-stop();rendering=true;$('renderBtn').disabled=true;$('download').hidden=true;$('downloadVideoBtn').hidden=true;$('convertMp4Btn').disabled=true;$('convertMp4Btn').textContent='ابتدا ویدئو را بسازید؛ سپس تبدیل به MP4';
+stop();rendering=true;$('renderBtn').disabled=true;$('download').hidden=true;$('downloadVideoBtn').hidden=true;$('convertMp4Btn').disabled=true;$('convertMp4Btn').textContent='تبدیل به MP4';
 let autoNarrationBlob=null;
 if(!$('narration').files[0]&&$('autoNarration').checked){
   if(!localTtsConnected){$('status').textContent='ابتدا روی «اتصال به موتور فارسی روی این کامپیوتر» بزن و پنجره start_studio_bridge را باز نگه دار.';rendering=false;$('renderBtn').disabled=false;return}
@@ -483,7 +483,7 @@ try{
 let recorder;const mimeCandidates=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];const chosenMime=mimeCandidates.find(type=>MediaRecorder.isTypeSupported(type));try{recorder=chosenMime?new MediaRecorder(stream,{mimeType:chosenMime}):new MediaRecorder(stream)}catch(e){$('status').textContent='مرورگر نتوانست ضبط ویدئو را آغاز کند: '+e.message;rendering=false;$('renderBtn').disabled=false;stream.getTracks().forEach(t=>t.stop());if(audioContext)audioContext.close();return}
 recorder.onerror=e=>{$('status').textContent='خطای ضبط ویدئو: '+(e.error?.message||'خطای MediaRecorder');rendering=false;$('renderBtn').disabled=false};
 recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
-recorder.onstop=()=>{const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(!blob.size){$('status').textContent='فایل ویدئو خالی ساخته شد؛ دوباره با Chrome یا Edge امتحان کن.';rendering=false;$('renderBtn').disabled=false;return}lastWebmBlob=blob;$('convertMp4Btn').hidden=false;$('convertMp4Btn').disabled=false;$('convertMp4Btn').textContent='تبدیل به MP4 مخصوص استوری';$('mp4Download').hidden=true;const url=URL.createObjectURL(blob);$('download').href=url;$('download').hidden=false;$('downloadVideoBtn').hidden=false;$('status').textContent='ویدئو آماده شد ('+Math.round(blob.size/1024/1024*10)/10+' مگابایت). برای ذخیره روی «دانلود ویدئو» بزن.';rendering=false;$('renderBtn').disabled=false;stream.getTracks().forEach(t=>t.stop());if(musicElement){musicElement.pause();musicElement.src='';}if(musicObjectUrl)URL.revokeObjectURL(musicObjectUrl);if(narrationElement){narrationElement.pause();narrationElement.src='';}voiceElements.forEach(el=>{el.pause();if(el.src)URL.revokeObjectURL(el.src)});if(musicTimer){clearInterval(musicTimer);musicTimer=null}musicNodes.forEach(n=>{try{if(n.stop)n.stop()}catch(e){}});musicNodes=[];if(audioContext)audioContext.close();if(narrationUrl)URL.revokeObjectURL(narrationUrl)};
+recorder.onstop=()=>{const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(!blob.size){$('status').textContent='فایل ویدئو خالی ساخته شد؛ دوباره با Chrome یا Edge امتحان کن.';rendering=false;$('renderBtn').disabled=false;return}lastWebmBlob=blob;$('convertMp4Btn').hidden=false;$('convertMp4Btn').disabled=false;$('convertMp4Btn').textContent='تبدیل به MP4';$('mp4Download').hidden=true;const url=URL.createObjectURL(blob);$('download').href=url;$('download').hidden=false;$('downloadVideoBtn').hidden=false;$('status').textContent='ویدئو آماده شد ('+Math.round(blob.size/1024/1024*10)/10+' مگابایت). برای ذخیره روی «دانلود ویدئو» بزن.';rendering=false;$('renderBtn').disabled=false;stream.getTracks().forEach(t=>t.stop());if(musicElement){musicElement.pause();musicElement.src='';}if(musicObjectUrl)URL.revokeObjectURL(musicObjectUrl);if(narrationElement){narrationElement.pause();narrationElement.src='';}voiceElements.forEach(el=>{el.pause();if(el.src)URL.revokeObjectURL(el.src)});if(musicTimer){clearInterval(musicTimer);musicTimer=null}musicNodes.forEach(n=>{try{if(n.stop)n.stop()}catch(e){}});musicNodes=[];if(audioContext)audioContext.close();if(narrationUrl)URL.revokeObjectURL(narrationUrl)};
 recorder.start(1000);if(musicElement){try{await audioContext.resume();await musicElement.play();$('status').textContent='موسیقی به مسیر صدای ویدئو وصل شد؛ در حال ضبط...'}catch(e){$('status').textContent='پخش موسیقی در ضبط ناموفق بود: '+e.message;try{recorder.stop()}catch(stopError){}return}}const per=Number($('duration').value)*1000;
 for(let i=0;i<s.length;i++){
  const img=sceneImage(s[i],i);
