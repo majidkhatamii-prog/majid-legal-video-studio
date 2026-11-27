@@ -82,24 +82,40 @@ async function connectLocalTts(){
     const response=await fetch('http://127.0.0.1:8765/voices',{method:'GET',mode:'cors'});
     const data=await response.json();
     if(!response.ok||!data.ok)throw new Error(data.error||'پاسخی از موتور گویندگی دریافت نشد.');
-    const select=$('localVoice');select.innerHTML='';
+    const select=$('localVoice'),previousVoice=select.value;select.innerHTML='';
     (data.voices||[]).forEach(v=>{const option=document.createElement('option');option.value=v.id;option.textContent=v.title+' — '+v.id;select.append(option)});
     if(!(data.voices||[]).length)throw new Error('مدل فارسی نصب‌شده‌ای پیدا نشد. ابتدا مدل صدا را در Sedabot دانلود کن.');
-    if((data.voices||[]).some(v=>v.id==='fa_IR-gyro-medium'))select.value='fa_IR-gyro-medium';
+    if((data.voices||[]).some(v=>v.id===previousVoice))select.value=previousVoice;
+    else if((data.voices||[]).some(v=>v.id==='fa_IR-gyro-medium'))select.value='fa_IR-gyro-medium';
     localTtsConnected=true;
     localTtsStatus('اتصال برقرار شد. '+data.voices.length+' مدل نصب‌شده پیدا شد.');
   }catch(e){localTtsConnected=false;localTtsStatus('اتصال برقرار نشد: '+e.message+' — مطمئن شو start_studio_bridge.bat باز است و این پنجره را نبسته‌ای.')}
 }
 async function synthesizeLocal(text){
   if(!localTtsConnected)throw new Error('ابتدا به موتور فارسی روی این کامپیوتر وصل شو.');
+  // انتخاب صدا و سرعت دقیقاً در لحظه درخواست خوانده می‌شوند.
+  const selectedVoice=$('localVoice').value,selectedSpeed=Number($('localSpeed').value);
   const response=await fetch('http://127.0.0.1:8765/synthesize',{
     method:'POST',mode:'cors',cache:'no-store',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({text,voice:$('localVoice').value,speed:Number($('localSpeed').value)})
+    body:JSON.stringify({text,voice:selectedVoice,speed:selectedSpeed})
   });
   if(!response.ok){let detail='ساخت فایل صوتی ناموفق بود.';try{const j=await response.json();detail=j.error||detail}catch(e){}throw new Error(detail)}
   return await response.blob();
 }
 $('connectLocalTts').addEventListener('click',connectLocalTts);
+// با تغییر صدا، نمونه قبلی فوراً متوقف و پاک می‌شود تا صدای قبلی اشتباهاً پخش نشود.
+$('localVoice').addEventListener('change',()=>{
+  const player=$('localAudioPreview');player.pause();player.removeAttribute('src');player.load();player.hidden=true;
+  if(generatedNarrationUrl)URL.revokeObjectURL(generatedNarrationUrl);generatedNarrationUrl=null;generatedNarrationBlob=null;
+  if(scriptPreviewUrl)URL.revokeObjectURL(scriptPreviewUrl);scriptPreviewUrl=null;
+  localTtsStatus('گوینده تغییر کرد. نمونه بعدی با صدای جدید ساخته می‌شود.');
+});
+$('localSpeed').addEventListener('change',()=>{
+  const player=$('localAudioPreview');player.pause();player.removeAttribute('src');player.load();player.hidden=true;
+  if(generatedNarrationUrl)URL.revokeObjectURL(generatedNarrationUrl);generatedNarrationUrl=null;generatedNarrationBlob=null;
+  if(scriptPreviewUrl)URL.revokeObjectURL(scriptPreviewUrl);scriptPreviewUrl=null;
+  localTtsStatus('سرعت تغییر کرد. نمونه بعدی با سرعت جدید ساخته می‌شود.');
+});
 $('testLocalTts').addEventListener('click',async()=>{
   try{
     $('testLocalTts').disabled=true;localTtsStatus('در حال ساخت نمونه صوتی...');
@@ -133,8 +149,8 @@ function moveImage(index,delta){const target=index+delta;if(target<0||target>=se
 $('images').addEventListener('change',()=>{selectedImageFiles=Array.from($('images').files);showImageOrder()});
 async function loadImages(){imageUrls.forEach(URL.revokeObjectURL);imageUrls=[];loadedImages=[];for(const f of selectedImageFiles){if(!f.type.startsWith('image/'))continue;const u=URL.createObjectURL(f),im=new Image();im.src=u;await im.decode();imageUrls.push(u);loadedImages.push(im)}}
 function stop(){if(timer){clearInterval(timer);timer=null}$('stopBtn').disabled=true}
-async function play(){stop();await loadImages();const s=scenes();if(!s.length){$('status').textContent='ابتدا سناریو را وارد کنید.';return}let i=0;const d=Number($('duration').value)*1000;draw(s[0],0,s.length,loadedImages[0]);timer=setInterval(()=>{i=(i+1)%s.length;draw(s[i],i,s.length,loadedImages[i%Math.max(loadedImages.length,1)])},d);$('stopBtn').disabled=false;$('status').textContent='پیش‌نمایش در حال پخش است.'}
-$('previewBtn').onclick=play;$('stopBtn').onclick=()=>{stop();$('status').textContent='پیش‌نمایش متوقف شد.'};
+async function play(){try{stop();$('status').textContent='در حال آماده‌سازی پیش‌نمایش...';await loadImages();const s=scenes();if(!s.length){$('status').textContent='ابتدا سناریو را وارد کنید.';return}let i=0;const d=Number($('duration').value)*1000;draw(s[0],0,s.length,loadedImages[0]||null);timer=setInterval(()=>{i=(i+1)%s.length;draw(s[i],i,s.length,loadedImages.length?loadedImages[i%loadedImages.length]:null)},d);$('stopBtn').disabled=false;$('status').textContent='پیش‌نمایش در حال پخش است.'}catch(e){stop();$('status').textContent='خطا در پیش‌نمایش: '+(e.message||e)}}
+$('previewBtn').onclick=()=>{play().catch(e=>{$('status').textContent='خطا در پیش‌نمایش: '+(e.message||e)})};$('stopBtn').onclick=()=>{stop();$('status').textContent='پیش‌نمایش متوقف شد.'};
 $('renderBtn').onclick=async()=>{if(rendering)return;const s=scenes();if(!s.length){$('status').textContent='سناریو خالی است.';return}if($('musicMode').value==='upload'&&!$('music').files[0]){$('status').textContent='ابتدا یک موسیقی MP3 از Mixkit دانلود و در قسمت انتخاب فایل موسیقی بارگذاری کنید.';return}if(!canvas.captureStream||!window.MediaRecorder){$('status').textContent='ضبط ویدئو در این مرورگر پشتیبانی نمی‌شود؛ Chrome یا Edge به‌روز را امتحان کنید.';return}
 stop();rendering=true;$('renderBtn').disabled=true;$('download').hidden=true;
 let autoNarrationBlob=null;
