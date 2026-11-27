@@ -158,20 +158,62 @@ $('searchOnlineMusic').addEventListener('click',searchOnlineMusic);$('musicCateg
 $('musicUploadWrap').hidden=true;$('onlineMusicPanel').hidden=false;
 function wrap(text,max){const words=text.split(/\s+/),lines=[];let line='';for(const w of words){const test=line?line+' '+w:w;if(ctx.measureText(test).width>max&&line){lines.push(line);line=w}else line=test}if(line)lines.push(line);return lines}
 function palette(){const t=$('theme').value;return t==='light'?{bg:'#f4f0e6',panel:'#fffdf8',ink:'#20334c',gold:'#a27b32',muted:'#687486'}:t==='minimal'?{bg:'#111816',panel:'#1c2924',ink:'#f7f3e9',gold:'#d1ad65',muted:'#b7c1ba'}:t==='cinema'?{bg:'#0b1425',panel:'#172844',ink:'#f8f5ed',gold:'#d6b66f',muted:'#c0c9d6'}:{bg:'#101d35',panel:'#1b3153',ink:'#f7f3e9',gold:'#c7a45e',muted:'#c2cad5'}}
+
+const vectorBackgroundCache={},vectorForegroundCache={};
+function sceneKind(text){
+ const t=String(text||'').replace(/\s+/g,' ');
+ if(/اثر انگشت|جعل|امضا|انگشت|مهر/.test(t))return 'signature';
+ if(/ملک|خانه|زمین|سند|مالکیت|خرید|فروش|ارث|وراث|میراث|آپارتمان/.test(t))return 'property';
+ if(/قرارداد|مبایعه|تعهد|چک|معامله|اجاره|فسخ/.test(t))return 'contract';
+ if(/خانواده|طلاق|مهریه|نفقه|حضانت|زوج|زوجه|ازدواج/.test(t))return 'family';
+ if(/کیفری|جرم|سرقت|کلاهبرداری|ضرب|تهدید|متهم|مجازات/.test(t))return 'criminal';
+ if(/خودرو|ماشین|وسیله نقلیه|تصادف|اتومبیل/.test(t))return 'car';
+ if(/دادگاه|قاضی|حکم|دادگستری|دادرسی|شکایت|دفاع|پرونده/.test(t))return 'court';
+ return 'justice';
+}
+function vectorShapes(kind){
+ const common='<g fill="none" stroke="#f1d89c" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"><path d="M180 18v190M130 48h100M180 48l-70 32M180 48l70 32"/><path d="M80 82l-35 70h70zM280 82l-35 70h70z"/><path d="M35 155q45 28 90 0M235 155q45 28 90 0M145 210h70"/></g>';
+ const shapes={
+ property:'<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".16"><path d="M55 115L180 25l125 90v105H55z"/><path d="M145 220v-78h70v78" fill="none"/><path d="M85 125h45v42H85zM230 125h45v42h-45z" fill="none"/></g>',
+ contract:'<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".12"><path d="M85 20h145l55 55v155H85z"/><path d="M230 20v58h55M120 110h130M120 145h130M120 180h75" fill="none" stroke-linecap="round"/><path d="M205 195l65-65 18 18-65 65-27 9z" fill="#f1d89c"/></g>',
+ court:'<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".12"><path d="M35 75L180 18 325 75zM48 205h264M65 225h230"/><path d="M75 85v115M145 85v115M215 85v115M285 85v115" fill="none"/></g>',
+ family:'<g stroke="#f1d89c" stroke-width="9" fill="#c5a45b" fill-opacity=".18"><circle cx="180" cy="68" r="38"/><circle cx="85" cy="100" r="30"/><circle cx="275" cy="100" r="30"/><path d="M105 220q0-90 75-90t75 90M18 220q0-75 67-75t67 75M208 220q0-75 67-75t67 75" stroke-linecap="round"/></g>',
+ criminal:'<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".15"><path d="M180 18l125 45v80q0 80-125 115Q55 223 55 143V63z"/><path d="M125 125l38 38 75-80" fill="none" stroke-linecap="round"/></g>',
+ car:'<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="#c5a45b" fill-opacity=".18"><path d="M40 155l25-65q8-20 30-20h170q22 0 32 22l23 63v55H40z"/><path d="M80 105h200M105 220a25 25 0 1 0 0-50 25 25 0 0 0 0 50M255 220a25 25 0 1 0 0-50 25 25 0 0 0 0 50"/></g>',
+ signature:'<g stroke="#f1d89c" stroke-width="9" stroke-linejoin="round" fill="none"><path d="M65 20h155l75 70v135H65zM220 20v72h75M105 125h140M105 155h95"/><path d="M105 195q30-40 48 0t45-3q18-28 35 0" stroke-linecap="round"/><circle cx="255" cy="180" r="25" stroke-dasharray="5 8"/></g>',
+ justice:common
+ };
+ return shapes[kind]||common;
+}
+function vectorSvg(kind,background=false){
+ const art=vectorShapes(kind);
+ if(background)return '<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 720 1280"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#102d3c"/><stop offset=".55" stop-color="#1b4658"/><stop offset="1" stop-color="#0b202e"/></linearGradient><radialGradient id="r"><stop stop-color="#c5a45b" stop-opacity=".32"/><stop offset="1" stop-color="#c5a45b" stop-opacity="0"/></radialGradient></defs><rect width="720" height="1280" fill="url(#g)"/><circle cx="580" cy="250" r="420" fill="url(#r)"/><circle cx="80" cy="1030" r="430" fill="url(#r)"/><path d="M0 900Q180 820 360 900T720 880V1280H0Z" fill="#071923" opacity=".25"/><g transform="translate(155 440) scale(1.15)" opacity=".23">'+art+'</g><path d="M40 280h640M40 1000h640" stroke="#d8bd7a" stroke-opacity=".22" stroke-width="2"/></svg>';
+ return '<svg xmlns="http://www.w3.org/2000/svg" width="360" height="240" viewBox="0 0 360 240">'+art+'</svg>';
+}
+function cacheVectorImage(cache,key,svg){
+ if(cache[key])return Promise.resolve(cache[key]);
+ return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>{cache[key]=im;resolve(im)};im.onerror=()=>reject(new Error('بارگذاری تصویر وکتوری ناموفق بود'));im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)});
+}
+async function preloadVectorArt(sceneList){
+ const kinds=[...new Set(sceneList.map(sceneKind))];
+ await Promise.all(kinds.flatMap(k=>[cacheVectorImage(vectorBackgroundCache,k,vectorSvg(k,true)),cacheVectorImage(vectorForegroundCache,k,vectorSvg(k,false))]));
+}
+function sceneImage(scene,index){return loadedImages.length?loadedImages[index%loadedImages.length]:(vectorBackgroundCache[sceneKind(scene)]||null)}
+
 function draw(text,index,total,img,progress=1){const p=palette();ctx.clearRect(0,0,720,1280);ctx.fillStyle=p.bg;ctx.fillRect(0,0,720,1280);
 if(img){const scale=Math.max(720/img.width,1280/img.height),w=img.width*scale,h=img.height*scale;ctx.globalAlpha=$('theme').value==='light'?.38:.58;ctx.drawImage(img,(720-w)/2,(1280-h)/2,w,h);ctx.globalAlpha=1;ctx.fillStyle=p.bg;ctx.globalAlpha=.14;ctx.fillRect(0,0,720,1280);ctx.globalAlpha=1}
 ctx.fillStyle=p.gold;ctx.fillRect(70,100,580,5);ctx.fillStyle=p.ink;ctx.textAlign='center';ctx.direction='rtl';ctx.font='700 27px Vazirmatn, IRANSans, Tahoma, sans-serif';ctx.fillText($('headline').value.trim()||'نکته حقوقی',360,174);
 const cardY=330,cardH=610;ctx.save();ctx.shadowColor='#00000030';ctx.shadowBlur=28;ctx.shadowOffsetY=12;ctx.fillStyle=p.panel;ctx.globalAlpha=.64;ctx.beginPath();ctx.roundRect(48,cardY,624,cardH,30);ctx.fill();ctx.globalAlpha=1;ctx.restore();ctx.strokeStyle=p.gold;ctx.globalAlpha=.6;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(48,cardY,624,cardH,30);ctx.stroke();ctx.globalAlpha=1;
-ctx.fillStyle=p.ink;ctx.font='700 38px Vazirmatn, IRANSans, Tahoma, sans-serif';let lines=wrap(text,520);while(lines.length>7){ctx.font='700 33px Vazirmatn, IRANSans, Tahoma, sans-serif';lines=wrap(text,550);break}const lineH=70,start=630-(lines.length*lineH)/2;lines.forEach((line,i)=>ctx.fillText(line,360,start+i*lineH));
+ctx.fillStyle=p.ink;ctx.font='700 34px Vazirmatn, IRANSans, Tahoma, sans-serif';let lines=wrap(text,540);if(lines.length>5){ctx.font='700 29px Vazirmatn, IRANSans, Tahoma, sans-serif';lines=wrap(text,550)}if(lines.length>7){ctx.font='700 25px Vazirmatn, IRANSans, Tahoma, sans-serif';lines=wrap(text,560)}const lineH=46,start=405+(285-lines.length*lineH)/2;lines.forEach((line,i)=>ctx.fillText(line,360,start+i*lineH));const art=vectorForegroundCache[sceneKind(text)];if(art){ctx.save();ctx.globalAlpha=.98;ctx.drawImage(art,220,710,280,190);ctx.restore()}
 ctx.fillStyle=p.gold;ctx.fillRect(70,1100,580,3);ctx.fillStyle=p.ink;ctx.font='700 23px Vazirmatn, IRANSans, Tahoma, sans-serif';ctx.fillText('مجید خاتمی',360,1150);ctx.fillStyle=p.muted;ctx.font='500 19px Vazirmatn, IRANSans, Tahoma, sans-serif';ctx.fillText(($('signatureLine').value.trim()||''),360,1190);
 ctx.fillStyle=p.muted;ctx.font='18px Vazirmatn, IRANSans, Tahoma, sans-serif';ctx.fillText((index+1)+' / '+total,360,1235);
 ctx.fillStyle=p.gold;ctx.fillRect(70,1260,580*(index+progress)/total,5)}
-function showImageOrder(){const box=$('imageOrder');box.innerHTML='';selectedImageFiles.forEach((f,i)=>{const item=document.createElement('div');item.className='image-order-item image-order-entry';const name=document.createElement('span');name.textContent=(i+1)+'. '+f.name;const up=document.createElement('button');up.type='button';up.textContent='↑';up.disabled=i===0;up.title='انتقال به قبل';up.onclick=()=>moveImage(i,-1);const down=document.createElement('button');down.type='button';down.textContent='↓';down.disabled=i===selectedImageFiles.length-1;down.title='انتقال به بعد';down.onclick=()=>moveImage(i,1);item.append(name,up,down);box.append(item)});if(!selectedImageFiles.length)box.textContent='هنوز تصویری انتخاب نشده است.'}
+function showImageOrder(){const box=$('imageOrder');box.innerHTML='';selectedImageFiles.forEach((f,i)=>{const item=document.createElement('div');item.className='image-order-item image-order-entry';const name=document.createElement('span');name.textContent=(i+1)+'. '+f.name;const up=document.createElement('button');up.type='button';up.textContent='↑';up.disabled=i===0;up.title='انتقال به قبل';up.onclick=()=>moveImage(i,-1);const down=document.createElement('button');down.type='button';down.textContent='↓';down.disabled=i===selectedImageFiles.length-1;down.title='انتقال به بعد';down.onclick=()=>moveImage(i,1);item.append(name,up,down);box.append(item)});if(!selectedImageFiles.length)box.textContent='تصویر پس‌زمینه برای هر صحنه به‌صورت خودکار انتخاب می‌شود.'}
 function moveImage(index,delta){const target=index+delta;if(target<0||target>=selectedImageFiles.length)return;[selectedImageFiles[index],selectedImageFiles[target]]=[selectedImageFiles[target],selectedImageFiles[index]];showImageOrder()}
 $('images').addEventListener('change',()=>{selectedImageFiles=Array.from($('images').files);showImageOrder()});
 async function loadImages(){imageUrls.forEach(URL.revokeObjectURL);imageUrls=[];loadedImages=[];for(const f of selectedImageFiles){if(!f.type.startsWith('image/'))continue;const u=URL.createObjectURL(f),im=new Image();im.src=u;await im.decode();imageUrls.push(u);loadedImages.push(im)}}
 function stop(){if(timer){clearInterval(timer);timer=null}$('stopBtn').disabled=true}
-async function play(){try{stop();$('status').textContent='در حال آماده‌سازی پیش‌نمایش...';await loadImages();const s=scenes();if(!s.length){$('status').textContent='ابتدا سناریو را وارد کنید.';return}let i=0;const d=Number($('duration').value)*1000;draw(s[0],0,s.length,loadedImages[0]||null);timer=setInterval(()=>{i=(i+1)%s.length;draw(s[i],i,s.length,loadedImages.length?loadedImages[i%loadedImages.length]:null)},d);$('stopBtn').disabled=false;$('status').textContent='پیش‌نمایش در حال پخش است.'}catch(e){stop();$('status').textContent='خطا در پیش‌نمایش: '+(e.message||e)}}
+async function play(){try{stop();$('status').textContent='در حال آماده‌سازی پیش‌نمایش...';await loadImages();const s=scenes();if(!s.length){$('status').textContent='ابتدا سناریو را وارد کنید.';return}await preloadVectorArt(s);let i=0;const d=Number($('duration').value)*1000;draw(s[0],0,s.length,sceneImage(s[0],0));timer=setInterval(()=>{i=(i+1)%s.length;draw(s[i],i,s.length,sceneImage(s[i],i))},d);$('stopBtn').disabled=false;$('status').textContent='پیش‌نمایش در حال پخش است.'}catch(e){stop();$('status').textContent='خطا در پیش‌نمایش: '+(e.message||e)}}
 $('previewBtn').onclick=()=>{play().catch(e=>{$('status').textContent='خطا در پیش‌نمایش: '+(e.message||e)})};$('stopBtn').onclick=()=>{stop();$('status').textContent='پیش‌نمایش متوقف شد.'};$('downloadVideoBtn').onclick=()=>{const link=$('download');if(link.href){link.click()}else{$('status').textContent='هنوز ویدئویی آماده دانلود نیست.'}};
 $('renderBtn').onclick=async()=>{if(rendering)return;const s=scenes();if(!s.length){$('status').textContent='سناریو خالی است.';return}// موسیقی اختیاری است؛ نبودن فایل موسیقی نباید مانع ساخت ویدئو شود.if(!canvas.captureStream||!window.MediaRecorder){$('status').textContent='ضبط ویدئو در این مرورگر پشتیبانی نمی‌شود؛ Chrome یا Edge به‌روز را امتحان کنید.';return}
 stop();rendering=true;$('renderBtn').disabled=true;$('download').hidden=true;$('downloadVideoBtn').hidden=true;
@@ -181,7 +223,7 @@ if(!$('narration').files[0]&&$('autoNarration').checked){
   try{$('status').textContent='در حال ساخت گویندگی جداگانه برای هر جمله...';autoNarrationBlob=[];for(let i=0;i<s.length;i++){ $('status').textContent='در حال ساخت صدای جمله '+(i+1)+' از '+s.length+'...';autoNarrationBlob.push(await synthesizeLocal(s[i]));}}
   catch(e){$('status').textContent='ساخت گویندگی ناموفق بود: '+e.message;rendering=false;$('renderBtn').disabled=false;return}
 }
-$('status').textContent='در حال آماده‌سازی تصاویر و موسیقی...';await loadImages();
+$('status').textContent='در حال آماده‌سازی تصاویر و موسیقی...';await loadImages();await preloadVectorArt(s);
 const fps=30,stream=canvas.captureStream(fps),chunks=[];let audioContext=null,musicElement=null,musicObjectUrl=null,narrationElement=null,narrationUrl=null,musicGainNode=null,voiceElements=[];
 try{
  const musicMode=$('musicMode').value,musicFile=$('music').files[0],voiceFile=$('narration').files[0],voiceBlobs=Array.isArray(autoNarrationBlob)?autoNarrationBlob:null;
@@ -247,8 +289,8 @@ recorder.onerror=e=>{$('status').textContent='خطای ضبط ویدئو: '+(e.e
 recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
 recorder.onstop=()=>{const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(!blob.size){$('status').textContent='فایل ویدئو خالی ساخته شد؛ دوباره با Chrome یا Edge امتحان کن.';rendering=false;$('renderBtn').disabled=false;return}const url=URL.createObjectURL(blob);$('download').href=url;$('download').hidden=false;$('downloadVideoBtn').hidden=false;$('status').textContent='ویدئو آماده شد ('+Math.round(blob.size/1024/1024*10)/10+' مگابایت). برای ذخیره روی «دانلود ویدئو» بزن.';rendering=false;$('renderBtn').disabled=false;stream.getTracks().forEach(t=>t.stop());if(musicElement){musicElement.pause();musicElement.src='';}if(musicObjectUrl)URL.revokeObjectURL(musicObjectUrl);if(narrationElement){narrationElement.pause();narrationElement.src='';}voiceElements.forEach(el=>{el.pause();if(el.src)URL.revokeObjectURL(el.src)});if(musicTimer){clearInterval(musicTimer);musicTimer=null}musicNodes.forEach(n=>{try{if(n.stop)n.stop()}catch(e){}});musicNodes=[];if(audioContext)audioContext.close();if(narrationUrl)URL.revokeObjectURL(narrationUrl)};
 recorder.start(1000);if(musicElement){try{await audioContext.resume();await musicElement.play();$('status').textContent='موسیقی به مسیر صدای ویدئو وصل شد؛ در حال ضبط...'}catch(e){$('status').textContent='پخش موسیقی در ضبط ناموفق بود: '+e.message;try{recorder.stop()}catch(stopError){}return}}const per=Number($('duration').value)*1000;
-for(let i=0;i<s.length;i++){const img=loadedImages.length?loadedImages[i%loadedImages.length]:null,voice=voiceElements[i],start=performance.now();if(voice){voice.currentTime=0;if(musicGainNode)musicGainNode.gain.setTargetAtTime(.065,audioContext.currentTime,.2);await voice.play()}while(performance.now()-start<per||(voice&&!voice.ended)){const progress=Math.min(1,(performance.now()-start)/per);draw(s[i],i,s.length,img,progress);await new Promise(r=>requestAnimationFrame(r))}if(voice&&musicGainNode)musicGainNode.gain.setTargetAtTime(.34,audioContext.currentTime,.25)}
-if(narrationElement){while(!narrationElement.ended){draw(s[s.length-1],s.length-1,s.length,loadedImages.length?loadedImages[(s.length-1)%loadedImages.length]:null,1);await new Promise(r=>requestAnimationFrame(r))}}
+for(let i=0;i<s.length;i++){const img=sceneImage(s[i],i),voice=voiceElements[i],start=performance.now();if(voice){voice.currentTime=0;if(musicGainNode)musicGainNode.gain.setTargetAtTime(.065,audioContext.currentTime,.2);await voice.play()}while(performance.now()-start<per||(voice&&!voice.ended)){const progress=Math.min(1,(performance.now()-start)/per);draw(s[i],i,s.length,img,progress);await new Promise(r=>requestAnimationFrame(r))}if(voice&&musicGainNode)musicGainNode.gain.setTargetAtTime(.34,audioContext.currentTime,.25)}
+if(narrationElement){while(!narrationElement.ended){draw(s[s.length-1],s.length-1,s.length,sceneImage(s[s.length-1],s.length-1),1);await new Promise(r=>requestAnimationFrame(r))}}
 if(musicElement)musicElement.pause();if(narrationElement)narrationElement.pause();if(musicTimer){clearInterval(musicTimer);musicTimer=null}recorder.stop()};
 // خطاهای پیش‌بینی‌نشده را به‌جای بی‌واکنش ماندن دکمه، در صفحه نشان بده.
 window.addEventListener('unhandledrejection',event=>{
