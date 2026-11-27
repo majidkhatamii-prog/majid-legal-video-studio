@@ -36,6 +36,20 @@ footer{text-align:center;color:#77808d;font-size:11px;padding:14px 15px 28px}.no
 برای پیشگیری از اختلاف، پیش از امضا مشاوره حقوقی بگیرید.</textarea>
 <label for="images">تصاویر دلخواه (اختیاری)</label><input id="images" type="file" accept="image/*" multiple><div id="imageOrder" class="image-order" aria-live="polite"></div>
 <p class="hint">اگر تعداد تصاویر کمتر از صحنه‌ها باشد، تصاویر به ترتیب تکرار می‌شوند. در صورت نداشتن تصویر، پس‌زمینه گرافیکی ساخته می‌شود.</p>
+
+<div class="note" id="localTtsPanel">
+<strong>گویندگی فارسی خودکار با Sedabot روی همین کامپیوتر</strong>
+<p class="hint">برای اتصال، فایل‌های کمکی را کنار cli.py در پوشه Sedabot گذاشته و start_studio_bridge.bat را اجرا کن. پنجره سیاه باید هنگام کار باز بماند.</p>
+<button type="button" id="connectLocalTts">اتصال به موتور فارسی روی این کامپیوتر</button>
+<div class="status" id="localTtsStatus" role="status">هنوز به Sedabot متصل نشده‌ایم.</div>
+<label for="localVoice">انتخاب صدای نصب‌شده</label><select id="localVoice"><option value="fa_IR-gyro-medium">Gyro (پیش‌فرض)</option></select>
+<label for="localSpeed">سرعت گویندگی: <span id="localSpeedValue">۱٫۲</span></label>
+<input id="localSpeed" type="range" min="0.65" max="1.60" step="0.05" value="1.2">
+<label style="display:flex;align-items:center;gap:8px"><input id="autoNarration" type="checkbox" checked style="width:auto"> ساخت خودکار گویندگی و افزودن آن به ویدئو</label>
+<button type="button" class="alt" id="testLocalTts">ساخت و شنیدن نمونه با صدای انتخاب‌شده</button>
+<audio id="localAudioPreview" controls hidden style="width:100%;margin-top:10px"></audio>
+<p class="hint">تولید صدا روی همین رایانه انجام می‌شود. سرعت پیش‌فرض ۱٫۲ است و قابل تغییر است. اگر فایل گویندگی را جداگانه بارگذاری کنی، همان فایل جایگزین گویندگی خودکار می‌شود.</p>
+</div>
 <label for="voiceChoice">گوینده متن (برای شنیدن در پیش‌نمایش)</label><select id="voiceChoice"><option value="auto">صدای فارسی پیش‌فرض دستگاه</option></select><button type="button" class="alt" id="speakScriptBtn">شنیدن گویندگی سناریو</button><button type="button" class="alt" id="stopSpeechBtn">توقف گویندگی</button><p class="hint">صدای گوینده به صداهای فارسی نصب‌شده روی ویندوز و مرورگر بستگی دارد. برای اینکه گویندگی حتماً داخل فایل نهایی ویدئو ضبط شود، فایل صوتی گویندگی را در کادر زیر بارگذاری کن.</p><label for="narration">فایل گویندگی فارسی (اختیاری؛ WAV یا MP3)</label><input id="narration" type="file" accept="audio/*"><p class="hint">فایل گویندگی آماده (WAV یا MP3) هنگام ساخت با ویدئو ترکیب می‌شود. گویندگی زنده مرورگر فقط برای پیش‌شنیدن است.</p><label for="musicMode">موسیقی پس‌زمینه</label><select id="musicMode"><option value="upload" selected>موسیقی واقعی دانلودشده (Mixkit)</option><option value="off">بدون موسیقی</option></select><div id="musicMoodWrap"><label for="musicMood">انتخاب موسیقی پیشنهادی</label><select id="musicMood"><option value="sports">۱. راک پرانرژی — Sports Highlights</option><option value="funk">۲. فانک شاد — Dirty Thinkin'</option><option value="electro">۳. الکترونیک پرضرب — Trap Electro Vibes</option><option value="epic">۴. سینمایی حماسی — Epical Drums 05</option><option value="games">۵. تریلر و ورزشی — Games Music</option></select><button type="button" class="alt" id="musicPreviewBtn">بازکردن کتابخانه و شنیدن نمونه‌ها</button></div><div id="musicUploadWrap" hidden><label for="music">انتخاب فایل موسیقی</label><input id="music" type="file" accept="audio/*"></div><p class="hint">پنج قطعه واقعی و متفاوت از Mixkit را از لینک زیر گوش کنید و دانلود کنید؛ سپس فایل MP3 را در قسمت انتخاب موسیقی بارگذاری کنید.</p>
 <label for="signatureLine">متن دلخواه زیر نام مجید خاتمی (اختیاری)</label><input id="signatureLine" value="خدمات حقوقی و مشاوره در شهرضا" placeholder="مثلاً کارآموز وکالت یا هر عبارت دلخواه"><div class="row">
 <div><label for="duration">مدت هر صحنه</label><select id="duration"><option value="3">۳ ثانیه</option><option value="4" selected>۴ ثانیه</option><option value="5">۵ ثانیه</option><option value="6">۶ ثانیه</option><option value="7">۷ ثانیه</option></select></div>
@@ -43,7 +57,7 @@ footer{text-align:center;color:#77808d;font-size:11px;padding:14px 15px 28px}.no
 </div>
 <button id="previewBtn">پیش‌نمایش</button><button id="renderBtn">ساخت ویدئو</button>
 <div class="status" id="status" role="status">آماده دریافت سناریو.</div>
-<div class="note"><strong>گویندگی مرد و زن:</strong> در این نسخه هنوز موتور تولید صدای فارسی داخل برنامه نصب نشده است؛ اما فایل گویندگیِ ازپیش‌ساخته‌شده (مرد یا زن) را می‌توانی بارگذاری کنی تا همراه ویدئو خروجی گرفته شود.</div><p class="hint">خروجی فعلی WebM است. در Chrome یا Edge اجرا کنید. فایل‌ها در همین مرورگر پردازش می‌شوند و به سرور ارسال نمی‌شوند.</p>
+<div class="note"><strong>نکته:</strong> برای گویندگی خودکار باید اتصال محلی Sedabot برقرار باشد. در غیر این صورت می‌توانی فایل WAV یا MP3 آماده بارگذاری کنی.</div><p class="hint">خروجی فعلی WebM است. در Chrome یا Edge اجرا کنید. فایل‌ها در همین مرورگر پردازش می‌شوند و به سرور ارسال نمی‌شوند.</p>
 </section>
 <section class="panel">
 <h2>۲. پیش‌نمایش و دریافت</h2>
@@ -57,8 +71,46 @@ footer{text-align:center;color:#77808d;font-size:11px;padding:14px 15px 28px}.no
 <script>
 const canvas=document.getElementById('screen'),ctx=canvas.getContext('2d');
 const $=id=>document.getElementById(id);
-let timer=null,loadedImages=[],imageUrls=[],rendering=false,animationFrame=0,musicTimer=null,musicNodes=[];
+let timer=null,loadedImages=[],imageUrls=[],rendering=false,animationFrame=0,musicTimer=null,musicNodes=[],selectedImageFiles=[];
 function scenes(){return $('script').value.split(/\n+/).map(x=>x.trim()).filter(Boolean)}
+let localTtsConnected=false,generatedNarrationBlob=null,generatedNarrationUrl=null;
+function localTtsStatus(message){$('localTtsStatus').textContent=message}
+$('localSpeed').addEventListener('input',()=>{$('localSpeedValue').textContent=Number($('localSpeed').value).toLocaleString('fa-IR',{maximumFractionDigits:2})});
+async function connectLocalTts(){
+  localTtsStatus('در حال اتصال به Sedabot...');
+  try{
+    const response=await fetch('http://127.0.0.1:8765/voices',{method:'GET',mode:'cors'});
+    const data=await response.json();
+    if(!response.ok||!data.ok)throw new Error(data.error||'پاسخی از موتور گویندگی دریافت نشد.');
+    const select=$('localVoice');select.innerHTML='';
+    (data.voices||[]).forEach(v=>{const option=document.createElement('option');option.value=v.id;option.textContent=v.title+' — '+v.id;select.append(option)});
+    if(!(data.voices||[]).length)throw new Error('مدل فارسی نصب‌شده‌ای پیدا نشد. ابتدا مدل صدا را در Sedabot دانلود کن.');
+    if((data.voices||[]).some(v=>v.id==='fa_IR-gyro-medium'))select.value='fa_IR-gyro-medium';
+    localTtsConnected=true;
+    localTtsStatus('اتصال برقرار شد. '+data.voices.length+' مدل نصب‌شده پیدا شد.');
+  }catch(e){localTtsConnected=false;localTtsStatus('اتصال برقرار نشد: '+e.message+' — مطمئن شو start_studio_bridge.bat باز است و این پنجره را نبسته‌ای.')}
+}
+async function synthesizeLocal(text){
+  if(!localTtsConnected)throw new Error('ابتدا به موتور فارسی روی این کامپیوتر وصل شو.');
+  const response=await fetch('http://127.0.0.1:8765/synthesize',{
+    method:'POST',mode:'cors',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text,voice:$('localVoice').value,speed:Number($('localSpeed').value)})
+  });
+  if(!response.ok){let detail='ساخت فایل صوتی ناموفق بود.';try{const j=await response.json();detail=j.error||detail}catch(e){}throw new Error(detail)}
+  return await response.blob();
+}
+$('connectLocalTts').addEventListener('click',connectLocalTts);
+$('testLocalTts').addEventListener('click',async()=>{
+  try{
+    $('testLocalTts').disabled=true;localTtsStatus('در حال ساخت نمونه صوتی...');
+    const blob=await synthesizeLocal(scenes().join(' . '));
+    if(generatedNarrationUrl)URL.revokeObjectURL(generatedNarrationUrl);
+    generatedNarrationBlob=blob;generatedNarrationUrl=URL.createObjectURL(blob);
+    $('localAudioPreview').src=generatedNarrationUrl;$('localAudioPreview').hidden=false;
+    await $('localAudioPreview').play();localTtsStatus('نمونه ساخته شد. اگر صدا را پسندیدی، ساخت ویدئو را بزن.');
+  }catch(e){localTtsStatus('خطا: '+e.message)}finally{$('testLocalTts').disabled=false}
+});
+
 let availableFaVoices=[];
 function loadSpeechVoices(){if(!('speechSynthesis' in window))return;availableFaVoices=speechSynthesis.getVoices().filter(v=>v.lang&&v.lang.toLowerCase().startsWith('fa'));const sel=$('voiceChoice');sel.innerHTML='';if(!availableFaVoices.length){sel.innerHTML='<option value="auto">صدای فارسی روی این دستگاه پیدا نشد</option>';return}availableFaVoices.forEach((v,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=v.name+' ('+v.lang+')';sel.append(o)})}
 function speakText(text){if(!('speechSynthesis' in window)){ $('status').textContent='قابلیت گویندگی در این مرورگر پشتیبانی نمی‌شود.';return}speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='fa-IR';u.rate=.92;u.pitch=1;const v=availableFaVoices[Number($('voiceChoice').value)];if(v)u.voice=v;speechSynthesis.speak(u)}
@@ -87,15 +139,23 @@ function stop(){if(timer){clearInterval(timer);timer=null}$('stopBtn').disabled=
 async function play(){stop();await loadImages();const s=scenes();if(!s.length){$('status').textContent='ابتدا سناریو را وارد کنید.';return}let i=0;const d=Number($('duration').value)*1000;draw(s[0],0,s.length,loadedImages[0]);timer=setInterval(()=>{i=(i+1)%s.length;draw(s[i],i,s.length,loadedImages[i%Math.max(loadedImages.length,1)])},d);$('stopBtn').disabled=false;$('status').textContent='پیش‌نمایش در حال پخش است.'}
 $('previewBtn').onclick=play;$('stopBtn').onclick=()=>{stop();$('status').textContent='پیش‌نمایش متوقف شد.'};
 $('renderBtn').onclick=async()=>{if(rendering)return;const s=scenes();if(!s.length){$('status').textContent='سناریو خالی است.';return}if($('musicMode').value==='upload'&&!$('music').files[0]){$('status').textContent='ابتدا یک موسیقی MP3 از Mixkit دانلود و در قسمت انتخاب فایل موسیقی بارگذاری کنید.';return}if(!canvas.captureStream||!window.MediaRecorder){$('status').textContent='ضبط ویدئو در این مرورگر پشتیبانی نمی‌شود؛ Chrome یا Edge به‌روز را امتحان کنید.';return}
-stop();rendering=true;$('renderBtn').disabled=true;$('download').hidden=true;$('status').textContent='در حال آماده‌سازی تصاویر و موسیقی...';await loadImages();
-const fps=30,stream=canvas.captureStream(fps),chunks=[];let audioContext=null,audioElement=null,audioUrl=null,narrationElement=null,narrationUrl=null;
-try{const musicMode=$('musicMode').value,musicFile=$('music').files[0],voiceFile=$('narration').files[0],useAuto=false;if(useAuto||((musicMode==='upload')&&musicFile)||voiceFile){audioContext=new(window.AudioContext||window.webkitAudioContext)();await audioContext.resume();const dest=audioContext.createMediaStreamDestination();dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));if(musicMode==='upload'&&musicFile){audioElement=new Audio();audioUrl=URL.createObjectURL(musicFile);audioElement.src=audioUrl;audioElement.loop=true;const musicSource=audioContext.createMediaElementSource(audioElement),musicGain=audioContext.createGain();musicGain.gain.value=.24;musicSource.connect(musicGain);musicGain.connect(dest);musicGain.connect(audioContext.destination);await audioElement.play()}if(voiceFile){narrationElement=new Audio();narrationUrl=URL.createObjectURL(voiceFile);narrationElement.src=narrationUrl;const voiceSource=audioContext.createMediaElementSource(narrationElement),voiceGain=audioContext.createGain();voiceGain.gain.value=1;voiceSource.connect(voiceGain);voiceGain.connect(dest);voiceGain.connect(audioContext.destination);await narrationElement.play()}}}
-catch(e){$('status').textContent='موسیقی پخش نشد؛ ویدئو بدون موسیقی ساخته می‌شود.'}
+stop();rendering=true;$('renderBtn').disabled=true;$('download').hidden=true;
+let autoNarrationBlob=null;
+if(!$('narration').files[0]&&$('autoNarration').checked){
+  if(!localTtsConnected){$('status').textContent='ابتدا روی «اتصال به موتور فارسی روی این کامپیوتر» بزن و پنجره start_studio_bridge را باز نگه دار.';rendering=false;$('renderBtn').disabled=false;return}
+  try{$('status').textContent='در حال ساخت گویندگی فارسی با مدل انتخاب‌شده...';autoNarrationBlob=await synthesizeLocal(scenes().join(' . '))}
+  catch(e){$('status').textContent='ساخت گویندگی ناموفق بود: '+e.message;rendering=false;$('renderBtn').disabled=false;return}
+}
+$('status').textContent='در حال آماده‌سازی تصاویر و موسیقی...';await loadImages();
+const fps=30,stream=canvas.captureStream(fps),chunks=[];let audioContext=null,audioElement=null,audioUrl=null,narrationElement=null,narrationUrl=null,musicGainNode=null;
+try{const musicMode=$('musicMode').value,musicFile=$('music').files[0],voiceFile=$('narration').files[0]||autoNarrationBlob;if(((musicMode==='upload')&&musicFile)||voiceFile){audioContext=new(window.AudioContext||window.webkitAudioContext)();await audioContext.resume();const dest=audioContext.createMediaStreamDestination();dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t));if(musicMode==='upload'&&musicFile){audioElement=new Audio();audioUrl=URL.createObjectURL(musicFile);audioElement.src=audioUrl;audioElement.loop=true;const musicSource=audioContext.createMediaElementSource(audioElement);musicGainNode=audioContext.createGain();musicGainNode.gain.value=.24;musicSource.connect(musicGainNode);musicGainNode.connect(dest);musicGainNode.connect(audioContext.destination);await audioElement.play()}if(voiceFile){narrationElement=new Audio();narrationUrl=URL.createObjectURL(voiceFile);narrationElement.src=narrationUrl;const voiceSource=audioContext.createMediaElementSource(narrationElement),voiceGain=audioContext.createGain();voiceGain.gain.value=1;voiceSource.connect(voiceGain);voiceGain.connect(dest);voiceGain.connect(audioContext.destination);if(musicGainNode){narrationElement.onplay=()=>musicGainNode.gain.setTargetAtTime(.055,audioContext.currentTime,.2);narrationElement.onended=()=>musicGainNode.gain.setTargetAtTime(.24,audioContext.currentTime,.35)}await narrationElement.play()}}}
+catch(e){$('status').textContent='صدای موسیقی یا گویندگی پخش نشد: '+e.message}
 let recorder;try{recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp9,opus'})}catch(e){try{recorder=new MediaRecorder(stream,{mimeType:'video/webm'})}catch(err){recorder=new MediaRecorder(stream)}}
 recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
 recorder.onstop=()=>{const blob=new Blob(chunks,{type:'video/webm'}),url=URL.createObjectURL(blob);$('download').href=url;$('download').hidden=false;$('status').textContent='ویدئو آماده شد؛ روی «دریافت ویدئوی ساخته‌شده» بزن.';rendering=false;$('renderBtn').disabled=false;stream.getTracks().forEach(t=>t.stop());if(audioElement){audioElement.pause();audioElement.src='';}if(narrationElement){narrationElement.pause();narrationElement.src='';}if(musicTimer){clearInterval(musicTimer);musicTimer=null}musicNodes.forEach(n=>{try{if(n.stop)n.stop()}catch(e){}});musicNodes=[];if(audioContext)audioContext.close();if(audioUrl)URL.revokeObjectURL(audioUrl);if(narrationUrl)URL.revokeObjectURL(narrationUrl)};
 recorder.start();const per=Number($('duration').value)*1000;
 for(let i=0;i<s.length;i++){const img=loadedImages.length?loadedImages[i%loadedImages.length]:null;const start=performance.now();while(performance.now()-start<per){const progress=Math.min(1,(performance.now()-start)/per);draw(s[i],i,s.length,img,progress);await new Promise(r=>requestAnimationFrame(r))}}
+while(narrationElement&&!narrationElement.ended){draw(s[s.length-1],s.length-1,s.length,loadedImages.length?loadedImages[(s.length-1)%loadedImages.length]:null,1);await new Promise(r=>requestAnimationFrame(r))}
 if(audioElement)audioElement.pause();if(narrationElement)narrationElement.pause();if(musicTimer){clearInterval(musicTimer);musicTimer=null}recorder.stop()};
 showImageOrder();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>draw('سناریوی حقوقی خود را وارد کنید',0,1,null));else draw('سناریوی حقوقی خود را وارد کنید',0,1,null);
 </script>
