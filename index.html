@@ -60,7 +60,7 @@ const $=id=>document.getElementById(id);
 let timer=null,loadedImages=[],imageUrls=[],rendering=false,animationFrame=0,musicTimer=null,musicNodes=[];
 function scenes(){return $('script').value.split(/\n+/).map(x=>x.trim()).filter(Boolean)}
 $('musicMode').addEventListener('change',()=>{$('musicUploadWrap').hidden=$('musicMode').value!=='upload';$('musicMoodWrap').hidden=$('musicMode').value!=='auto'});
-$('musicPreviewBtn').addEventListener('click',()=>window.open('https://mixkit.co/free-stock-music/mood/energetic/','_blank','noopener'));
+const musicPages={sports:'https://mixkit.co/free-stock-music/mood/energetic/',funk:'https://mixkit.co/free-stock-music/funk/',electro:'https://mixkit.co/free-stock-music/mood/energetic/',epic:'https://mixkit.co/free-stock-music/tag/action/',games:'https://mixkit.co/free-stock-music/trailer-music/'};$('musicPreviewBtn').addEventListener('click',()=>window.open(musicPages[$('musicMood').value]||musicPages.sports,'_blank','noopener'));
 function wrap(text,max){const words=text.split(/\s+/),lines=[];let line='';for(const w of words){const test=line?line+' '+w:w;if(ctx.measureText(test).width>max&&line){lines.push(line);line=w}else line=test}if(line)lines.push(line);return lines}
 function palette(){const t=$('theme').value;return t==='light'?{bg:'#f4f0e6',panel:'#fffdf8',ink:'#20334c',gold:'#a27b32',muted:'#687486'}:t==='minimal'?{bg:'#111816',panel:'#1c2924',ink:'#f7f3e9',gold:'#d1ad65',muted:'#b7c1ba'}:t==='cinema'?{bg:'#0b1425',panel:'#172844',ink:'#f8f5ed',gold:'#d6b66f',muted:'#c0c9d6'}:{bg:'#101d35',panel:'#1b3153',ink:'#f7f3e9',gold:'#c7a45e',muted:'#c2cad5'}}
 function draw(text,index,total,img,progress=1){const p=palette();ctx.clearRect(0,0,720,1280);ctx.fillStyle=p.bg;ctx.fillRect(0,0,720,1280);
