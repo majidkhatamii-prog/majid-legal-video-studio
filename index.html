@@ -60,13 +60,13 @@ footer{text-align:center;color:#77808d;font-size:11px;padding:14px 15px 28px}.no
 </div>
 <button id="previewBtn">پیش‌نمایش</button><button id="renderBtn">ساخت ویدئو</button>
 <div class="status" id="status" role="status">آماده دریافت سناریو.</div>
-<div class="note"><strong>نکته:</strong> برای گویندگی خودکار باید اتصال محلی Sedabot برقرار باشد. در غیر این صورت می‌توانی فایل WAV یا MP3 آماده بارگذاری کنی.</div><p class="hint">خروجی فعلی WebM است. در Chrome یا Edge اجرا کنید. فایل‌ها در همین مرورگر پردازش می‌شوند و به سرور ارسال نمی‌شوند.</p>
+<div class="note"><strong>نکته:</strong> برای گویندگی خودکار باید اتصال محلی Sedabot برقرار باشد. در غیر این صورت می‌توانی فایل WAV یا MP3 آماده بارگذاری کنی.</div><p class="hint">ویدئو ابتدا با فرمت سریع WebM ساخته می‌شود؛ سپس می‌توانید آن را در همین صفحه به MP4 مناسب استوری اینستاگرام تبدیل کنید. تبدیل روی دستگاه شما انجام می‌شود.</p>
 </section>
 <section class="panel">
 <h2>۲. پیش‌نمایش و دریافت</h2>
 <div class="preview"><canvas id="screen" width="720" height="1280"></canvas></div>
 <button class="alt" id="stopBtn" disabled>توقف پیش‌نمایش</button>
-<a id="download" hidden download="majid-khatami-legal-video.webm">دریافت ویدئوی ساخته‌شده</a><button type="button" class="alt" id="downloadVideoBtn" hidden>دانلود ویدئو</button>
+<a id="download" hidden download="majid-khatami-legal-video.webm">دریافت نسخه WebM</a><button type="button" class="alt" id="downloadVideoBtn" hidden>دانلود نسخه WebM</button><button type="button" class="alt" id="convertMp4Btn" hidden>تبدیل به MP4 مخصوص استوری</button><a id="mp4Download" hidden download="majid-khatami-story.mp4">دانلود MP4 مخصوص استوری</a>
 <p class="hint">ویدئو عمودی ۹:۱۶ و مناسب ریلز است. پیش از انتشار، متن حقوقی، تصاویر و مجوز استفاده از موسیقی را بررسی کنید.</p>
 </section>
 </main>
@@ -375,6 +375,39 @@ async function loadImages(){
 function stop(){if(timer){clearInterval(timer);timer=null}$('stopBtn').disabled=true}
 async function play(){try{stop();$('status').textContent='در حال آماده‌سازی پیش‌نمایش...';await loadImages();const s=scenes();if(!s.length){$('status').textContent='ابتدا سناریو را وارد کنید.';return}await preloadVectorArt(s);let i=0;const d=Number($('duration').value)*1000;draw(s[0],0,s.length,sceneImage(s[0],0));timer=setInterval(()=>{i=(i+1)%s.length;draw(s[i],i,s.length,sceneImage(s[i],i))},d);$('stopBtn').disabled=false;$('status').textContent='پیش‌نمایش در حال پخش است.'}catch(e){stop();$('status').textContent='خطا در پیش‌نمایش: '+(e.message||e)}}
 $('previewBtn').onclick=()=>{play().catch(e=>{$('status').textContent='خطا در پیش‌نمایش: '+(e.message||e)})};$('stopBtn').onclick=()=>{stop();$('status').textContent='پیش‌نمایش متوقف شد.'};$('downloadVideoBtn').onclick=()=>{const link=$('download');if(link.href){link.click()}else{$('status').textContent='هنوز ویدئویی آماده دانلود نیست.'}};
+let lastWebmBlob=null,lastMp4Url=null,ffmpegInstance=null,ffmpegLoading=null;
+$('convertMp4Btn').onclick=async()=>{
+ if(!lastWebmBlob){$('status').textContent='ابتدا ویدئو را بسازید.';return}
+ const btn=$('convertMp4Btn');btn.disabled=true;$('mp4Download').hidden=true;
+ try{
+  $('status').textContent='در حال بارگذاری موتور تبدیل MP4؛ در بار اول ممکن است کمی طول بکشد...';
+  if(!ffmpegInstance){
+   if(!ffmpegLoading)ffmpegLoading=(async()=>{
+    const mod=await import('https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.10/dist/esm/index.js');
+    const {FFmpeg}=mod,engine=new FFmpeg();
+    engine.on('progress',({progress})=>{$('status').textContent='در حال تبدیل به MP4: '+Math.round((progress||0)*100)+'٪';});
+    await engine.load({
+     coreURL:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js',
+     wasmURL:'https://cdn.jsdelivr.net/npm/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm'
+    });
+    return engine;
+   })();
+   ffmpegInstance=await ffmpegLoading;
+  }
+  $('status').textContent='در حال تبدیل ویدئو به MP4 با کیفیت مناسب استوری...';
+  await ffmpegInstance.writeFile('input.webm',new Uint8Array(await lastWebmBlob.arrayBuffer()));
+  const result=await ffmpegInstance.exec(['-i','input.webm','-c:v','libx264','-preset','ultrafast','-crf','23','-pix_fmt','yuv420p','-c:a','aac','-b:a','128k','-movflags','+faststart','output.mp4']);
+  if(result!==0)throw new Error('موتور تبدیل نتوانست فایل MP4 بسازد.');
+  const data=await ffmpegInstance.readFile('output.mp4');
+  if(!data||!data.length)throw new Error('فایل MP4 خروجی خالی است.');
+  if(lastMp4Url)URL.revokeObjectURL(lastMp4Url);
+  lastMp4Url=URL.createObjectURL(new Blob([data],{type:'video/mp4'}));
+  $('mp4Download').href=lastMp4Url;$('mp4Download').hidden=false;
+  $('status').textContent='نسخه MP4 آماده است. روی «دانلود MP4 مخصوص استوری» بزن و همان فایل را به اینستاگرام بفرست.';
+ }catch(e){
+  console.error(e);$('status').textContent='تبدیل MP4 انجام نشد: '+(e.message||e)+'. اتصال اینترنت را بررسی کن و دوباره امتحان کن.';
+ }finally{btn.disabled=false}
+};
 $('renderBtn').onclick=async()=>{if(rendering)return;const s=scenes();if(!s.length){$('status').textContent='سناریو خالی است.';return}// موسیقی اختیاری است؛ نبودن فایل موسیقی نباید مانع ساخت ویدئو شود.if(!canvas.captureStream||!window.MediaRecorder){$('status').textContent='ضبط ویدئو در این مرورگر پشتیبانی نمی‌شود؛ Chrome یا Edge به‌روز را امتحان کنید.';return}
 stop();rendering=true;$('renderBtn').disabled=true;$('download').hidden=true;$('downloadVideoBtn').hidden=true;
 let autoNarrationBlob=null;
@@ -447,7 +480,7 @@ try{
 let recorder;const mimeCandidates=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];const chosenMime=mimeCandidates.find(type=>MediaRecorder.isTypeSupported(type));try{recorder=chosenMime?new MediaRecorder(stream,{mimeType:chosenMime}):new MediaRecorder(stream)}catch(e){$('status').textContent='مرورگر نتوانست ضبط ویدئو را آغاز کند: '+e.message;rendering=false;$('renderBtn').disabled=false;stream.getTracks().forEach(t=>t.stop());if(audioContext)audioContext.close();return}
 recorder.onerror=e=>{$('status').textContent='خطای ضبط ویدئو: '+(e.error?.message||'خطای MediaRecorder');rendering=false;$('renderBtn').disabled=false};
 recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
-recorder.onstop=()=>{const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(!blob.size){$('status').textContent='فایل ویدئو خالی ساخته شد؛ دوباره با Chrome یا Edge امتحان کن.';rendering=false;$('renderBtn').disabled=false;return}const url=URL.createObjectURL(blob);$('download').href=url;$('download').hidden=false;$('downloadVideoBtn').hidden=false;$('status').textContent='ویدئو آماده شد ('+Math.round(blob.size/1024/1024*10)/10+' مگابایت). برای ذخیره روی «دانلود ویدئو» بزن.';rendering=false;$('renderBtn').disabled=false;stream.getTracks().forEach(t=>t.stop());if(musicElement){musicElement.pause();musicElement.src='';}if(musicObjectUrl)URL.revokeObjectURL(musicObjectUrl);if(narrationElement){narrationElement.pause();narrationElement.src='';}voiceElements.forEach(el=>{el.pause();if(el.src)URL.revokeObjectURL(el.src)});if(musicTimer){clearInterval(musicTimer);musicTimer=null}musicNodes.forEach(n=>{try{if(n.stop)n.stop()}catch(e){}});musicNodes=[];if(audioContext)audioContext.close();if(narrationUrl)URL.revokeObjectURL(narrationUrl)};
+recorder.onstop=()=>{const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(!blob.size){$('status').textContent='فایل ویدئو خالی ساخته شد؛ دوباره با Chrome یا Edge امتحان کن.';rendering=false;$('renderBtn').disabled=false;return}lastWebmBlob=blob;$('convertMp4Btn').hidden=false;$('mp4Download').hidden=true;const url=URL.createObjectURL(blob);$('download').href=url;$('download').hidden=false;$('downloadVideoBtn').hidden=false;$('status').textContent='ویدئو آماده شد ('+Math.round(blob.size/1024/1024*10)/10+' مگابایت). برای ذخیره روی «دانلود ویدئو» بزن.';rendering=false;$('renderBtn').disabled=false;stream.getTracks().forEach(t=>t.stop());if(musicElement){musicElement.pause();musicElement.src='';}if(musicObjectUrl)URL.revokeObjectURL(musicObjectUrl);if(narrationElement){narrationElement.pause();narrationElement.src='';}voiceElements.forEach(el=>{el.pause();if(el.src)URL.revokeObjectURL(el.src)});if(musicTimer){clearInterval(musicTimer);musicTimer=null}musicNodes.forEach(n=>{try{if(n.stop)n.stop()}catch(e){}});musicNodes=[];if(audioContext)audioContext.close();if(narrationUrl)URL.revokeObjectURL(narrationUrl)};
 recorder.start(1000);if(musicElement){try{await audioContext.resume();await musicElement.play();$('status').textContent='موسیقی به مسیر صدای ویدئو وصل شد؛ در حال ضبط...'}catch(e){$('status').textContent='پخش موسیقی در ضبط ناموفق بود: '+e.message;try{recorder.stop()}catch(stopError){}return}}const per=Number($('duration').value)*1000;
 for(let i=0;i<s.length;i++){
  const img=sceneImage(s[i],i);
