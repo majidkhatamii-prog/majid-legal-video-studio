@@ -180,10 +180,12 @@ async function selectOnlineMusic(item,button,rowStatus){
   const success='آهنگ کامل دریافت و برای ویدئو انتخاب شد: '+item.title;
   rowStatus.textContent=success;$('onlineMusicStatus').textContent=success+' | '+item.license+' | سازنده: '+item.artist+'. اکنون می‌توانی ویدئو بسازی.';
  }catch(e){
-  const message=e.name==='AbortError'?'دریافت بیش از ۳۰ ثانیه طول کشید و متوقف شد.':e.message;
-  rowStatus.textContent='دریافت خودکار ناموفق بود: '+message;
-  $('onlineMusicStatus').textContent='دریافت خودکار این آهنگ در ۳۰ ثانیه انجام نشد. روی «صفحه و مجوز» بزن، فایل را از همان منبع روی کامپیوتر دانلود کن و سپس از بخش «فایل موسیقی از کامپیوتر» بارگذاری کن. علت: '+message;
- }finally{button.disabled=false;button.textContent='استفاده در ویدئو'}
+  const message=e.name==='AbortError'?'دریافت مستقیم بیش از ۳۰ ثانیه طول کشید.':e.message;
+  const directUrl='https://commons.wikimedia.org/wiki/Special:Redirect/file/'+encodeURIComponent(item.title)+'?download=1';
+  const downloadLink=document.createElement('a');downloadLink.href=directUrl;downloadLink.download=item.title.split('/').pop();downloadLink.rel='noopener';downloadLink.style.display='none';document.body.appendChild(downloadLink);downloadLink.click();downloadLink.remove();
+  rowStatus.textContent='دریافت مستقیم مرورگر محدود شد؛ لینک دانلود جایگزین باز/فعال شد.';
+  $('onlineMusicStatus').textContent='مرورگر اجازه دریافت مستقیم فایل از سرور را نداد ('+message+'). لینک دانلود جایگزین فعال شد. اگر فایل در پوشه Downloads ذخیره شد، آن را از بخش «فایل موسیقی از کامپیوتر» بارگذاری کن؛ اگر به‌جای دانلود صفحه آهنگ باز شد، از همان صفحه گزینه Download را بزن.';
+ }finally{button.disabled=false;button.textContent='دانلود / استفاده در ویدئو'}
 }
 $('searchOnlineMusic').addEventListener('click',searchOnlineMusic);$('musicCategory').addEventListener('change',searchOnlineMusic);
 
