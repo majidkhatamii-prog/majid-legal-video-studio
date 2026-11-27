@@ -428,8 +428,41 @@ recorder.onerror=e=>{$('status').textContent='خطای ضبط ویدئو: '+(e.e
 recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
 recorder.onstop=()=>{const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(!blob.size){$('status').textContent='فایل ویدئو خالی ساخته شد؛ دوباره با Chrome یا Edge امتحان کن.';rendering=false;$('renderBtn').disabled=false;return}const url=URL.createObjectURL(blob);$('download').href=url;$('download').hidden=false;$('downloadVideoBtn').hidden=false;$('status').textContent='ویدئو آماده شد ('+Math.round(blob.size/1024/1024*10)/10+' مگابایت). برای ذخیره روی «دانلود ویدئو» بزن.';rendering=false;$('renderBtn').disabled=false;stream.getTracks().forEach(t=>t.stop());if(musicElement){musicElement.pause();musicElement.src='';}if(musicObjectUrl)URL.revokeObjectURL(musicObjectUrl);if(narrationElement){narrationElement.pause();narrationElement.src='';}voiceElements.forEach(el=>{el.pause();if(el.src)URL.revokeObjectURL(el.src)});if(musicTimer){clearInterval(musicTimer);musicTimer=null}musicNodes.forEach(n=>{try{if(n.stop)n.stop()}catch(e){}});musicNodes=[];if(audioContext)audioContext.close();if(narrationUrl)URL.revokeObjectURL(narrationUrl)};
 recorder.start(1000);if(musicElement){try{await audioContext.resume();await musicElement.play();$('status').textContent='موسیقی به مسیر صدای ویدئو وصل شد؛ در حال ضبط...'}catch(e){$('status').textContent='پخش موسیقی در ضبط ناموفق بود: '+e.message;try{recorder.stop()}catch(stopError){}return}}const per=Number($('duration').value)*1000;
-for(let i=0;i<s.length;i++){const img=sceneImage(s[i],i),voice=voiceElements[i],start=performance.now();if(voice){voice.currentTime=0;if(musicGainNode)musicGainNode.gain.setTargetAtTime(.78,audioContext.currentTime,.2);await voice.play()}while(performance.now()-start<per||(voice&&!voice.ended)){const progress=Math.min(1,(performance.now()-start)/per);draw(s[i],i,s.length,img,progress);await new Promise(r=>requestAnimationFrame(r))}if(voice&&musicGainNode)musicGainNode.gain.setTargetAtTime(1.24,audioContext.currentTime,.25)}
-if(narrationElement){while(!narrationElement.ended){draw(s[s.length-1],s.length-1,s.length,sceneImage(s[s.length-1],s.length-1),1);await new Promise(r=>requestAnimationFrame(r))}}
+for(let i=0;i<s.length;i++){
+ const img=sceneImage(s[i],i);
+ let voice=voiceElements[i]||null;
+ const start=performance.now();
+ if(voice){
+  try{
+   voice.pause();voice.currentTime=0;
+   if(musicGainNode)musicGainNode.gain.setTargetAtTime(.78,audioContext.currentTime,.2);
+   await voice.play();
+  }catch(playError){
+   voice=null;
+   $('status').textContent='گویندگی اسلاید '+(i+1)+' پخش نشد؛ ادامه ویدئو بدون توقف انجام می‌شود.';
+  }
+ }
+ const voiceLimit=voice&&Number.isFinite(voice.duration)&&voice.duration>0?Math.min(180000,voice.duration*1000+1800):Math.max(per,30000);
+ while(performance.now()-start<per||(voice&&!voice.ended&&performance.now()-start<voiceLimit)){
+  const progress=Math.min(1,(performance.now()-start)/per);
+  draw(s[i],i,s.length,img,progress);
+  await new Promise(r=>requestAnimationFrame(r));
+ }
+ if(voice&&!voice.ended)voice.pause();
+ if(voice&&musicGainNode)musicGainNode.gain.setTargetAtTime(1.24,audioContext.currentTime,.25);
+}
+if(narrationElement){
+ try{
+  narrationElement.currentTime=0;
+  await narrationElement.play();
+  const narrationStart=performance.now();
+  const narrationLimit=Number.isFinite(narrationElement.duration)&&narrationElement.duration>0?Math.min(300000,narrationElement.duration*1000+2000):180000;
+  while(!narrationElement.ended&&performance.now()-narrationStart<narrationLimit){
+   draw(s[s.length-1],s.length-1,s.length,sceneImage(s[s.length-1],s.length-1),1);
+   await new Promise(r=>requestAnimationFrame(r));
+  }
+ }catch(narrationError){$('status').textContent='گویندگی فایل صوتی پخش نشد؛ ویدئو بدون توقف ادامه یافت.'}
+}
 if(musicElement)musicElement.pause();if(narrationElement)narrationElement.pause();if(musicTimer){clearInterval(musicTimer);musicTimer=null}recorder.stop()};
 // خطاهای پیش‌بینی‌نشده را به‌جای بی‌واکنش ماندن دکمه، در صفحه نشان بده.
 window.addEventListener('unhandledrejection',event=>{
