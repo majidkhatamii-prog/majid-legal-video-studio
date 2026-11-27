@@ -152,40 +152,38 @@ try{
  $('onlineMusicStatus').textContent=items.length+' فایل صوتی با مجوز آزاد پیدا شد. انتخاب کن تا دریافت شود.';
 }catch(e){$('onlineMusicStatus').textContent='خطا در جست‌وجو: '+e.message}finally{$('searchOnlineMusic').disabled=false}}
 async function previewOnlineMusic(item,button){const player=$('onlineMusicPlayer');try{player.pause();player.removeAttribute('src');player.load();player.src=item.url;player.hidden=false;$('onlineMusicStatus').textContent='در حال پخش نمونه: '+item.title;await player.play()}catch(e){$('onlineMusicStatus').textContent='پخش مستقیم ممکن نشد. لینک صفحه منبع را باز کن؛ اگر آنجا پخش شد، مشکل از محدودیت مرورگر در این سایت است.'}}
-async function fetchMusicFile(url,timeoutMs=30000){
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),timeoutMs);
- try{
-  const res=await fetch(url,{mode:'cors',cache:'no-store',signal:controller.signal});
-  if(!res.ok)throw new Error('سرور فایل را تحویل نداد (HTTP '+res.status+').');
-  const type=(res.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();
-  if(!res.body){const blob=await res.blob();if(blob.size<2048)throw new Error('فایل دریافتی خالی یا ناقص است.');return blob}
-  const reader=res.body.getReader(),chunks=[];let total=0;
-  while(true){const part=await reader.read();if(part.done)break;chunks.push(part.value);total+=part.value.byteLength;if(total>60*1024*1024){reader.cancel();throw new Error('حجم فایل بیش از ۶۰ مگابایت است.')} }
-  if(total<2048)throw new Error('فایل دریافتی خالی یا ناقص است.');
-  return new Blob(chunks,{type:type||'audio/mpeg'});
- }finally{clearTimeout(timer)}
+async function fetchMusicFile(url,signal){
+ const res=await fetch(url,{mode:'cors',cache:'no-store',credentials:'omit',signal});
+ if(!res.ok)throw new Error('سرور فایل را تحویل نداد (HTTP '+res.status+').');
+ const type=(res.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();
+ const blob=await res.blob();
+ if(blob.size<2048)throw new Error('فایل دریافتی خالی یا ناقص است.');
+ if(blob.size>60*1024*1024)throw new Error('حجم فایل بیش از ۶۰ مگابایت است.');
+ return new Blob([blob],{type:type||blob.type||'audio/mpeg'});
 }
 async function selectOnlineMusic(item,button,rowStatus){
- button.disabled=true;button.textContent='در حال دریافت...';rowStatus.textContent='در حال دریافت فایل آهنگ (ممکن است کمی طول بکشد)...';$('onlineMusicStatus').textContent='در حال دریافت کامل آهنگ؛ لطفاً این صفحه را نبند...';
+ button.disabled=true;button.textContent='در حال دریافت...';rowStatus.textContent='در حال دریافت مستقیم در همین صفحه؛ حداکثر ۳۰ ثانیه صبر کن...';$('onlineMusicStatus').textContent='آهنگ در همین صفحه دریافت می‌شود؛ نیازی به باز کردن تب یا دانلود دستی نیست.';
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
  try{
   let blob=null,lastError=null;
-  const urls=[item.url,'https://commons.wikimedia.org/wiki/Special:Redirect/file/'+encodeURIComponent(item.title)];
-  for(let n=0;n<urls.length;n++){try{blob=await fetchMusicFile(urls[n]);if(blob)break}catch(e){lastError=e}}
+  const redirect='https://commons.wikimedia.org/wiki/Special:Redirect/file/'+encodeURIComponent(item.title);
+  for(const url of [item.url,redirect]){
+   if(controller.signal.aborted)break;
+   try{blob=await fetchMusicFile(url,controller.signal);if(blob)break}catch(e){lastError=e}
+  }
   if(!blob)throw lastError||new Error('دریافت فایل از منبع ممکن نشد.');
   const knownAudio=blob.type.startsWith('audio/')||/\.(mp3|wav|ogg|oga|opus|flac|m4a|aac)(\?|$)/i.test(item.url+' '+item.title);
   if(!knownAudio)throw new Error('سرور به‌جای فایل صوتی، محتوای دیگری فرستاد.');
   resetOnlineMusic();onlineMusicBlob=blob;onlineMusicMeta=item;onlineMusicUrl=URL.createObjectURL(blob);
   const player=$('onlineMusicPlayer');player.pause();player.src=onlineMusicUrl;player.hidden=false;player.load();
   $('music').value='';$('musicMode').value='online';$('onlineMusicPanel').hidden=false;$('musicUploadWrap').hidden=true;
-  const success='آهنگ کامل دریافت و برای ویدئو انتخاب شد: '+item.title;
+  const success='آهنگ کامل در همین صفحه دریافت و برای ویدئو انتخاب شد: '+item.title;
   rowStatus.textContent=success;$('onlineMusicStatus').textContent=success+' | '+item.license+' | سازنده: '+item.artist+'. اکنون می‌توانی ویدئو بسازی.';
  }catch(e){
-  const message=e.name==='AbortError'?'دریافت مستقیم بیش از ۳۰ ثانیه طول کشید.':e.message;
-  const directUrl='https://commons.wikimedia.org/wiki/Special:Redirect/file/'+encodeURIComponent(item.title)+'?download=1';
-  const downloadLink=document.createElement('a');downloadLink.href=directUrl;downloadLink.download=item.title.split('/').pop();downloadLink.rel='noopener';downloadLink.style.display='none';document.body.appendChild(downloadLink);downloadLink.click();downloadLink.remove();
-  rowStatus.textContent='دریافت مستقیم مرورگر محدود شد؛ لینک دانلود جایگزین باز/فعال شد.';
-  $('onlineMusicStatus').textContent='مرورگر اجازه دریافت مستقیم فایل از سرور را نداد ('+message+'). لینک دانلود جایگزین فعال شد. اگر فایل در پوشه Downloads ذخیره شد، آن را از بخش «فایل موسیقی از کامپیوتر» بارگذاری کن؛ اگر به‌جای دانلود صفحه آهنگ باز شد، از همان صفحه گزینه Download را بزن.';
- }finally{button.disabled=false;button.textContent='دانلود / استفاده در ویدئو'}
+  const message=e.name==='AbortError'?'مهلت ۳۰ ثانیه‌ای دریافت تمام شد.':e.message;
+  rowStatus.textContent='دریافت ناموفق بود؛ هیچ تب یا دانلود خارجی باز نشد.';
+  $('onlineMusicStatus').textContent='دریافت داخل همین صفحه انجام نشد: '+message+' ممکن است این فایل یا سرور اجازه دریافت مستقیم از مرورگر را ندهد. آهنگ دیگری را امتحان کن.';
+ }finally{clearTimeout(timer);button.disabled=false;button.textContent='دانلود / استفاده در ویدئو'}
 }
 $('searchOnlineMusic').addEventListener('click',searchOnlineMusic);$('musicCategory').addEventListener('change',searchOnlineMusic);
 
