@@ -201,7 +201,7 @@ try{
    musicElement.loop=true;
    const musicSource=audioContext.createMediaElementSource(musicElement);
    musicGainNode=audioContext.createGain();
-   musicGainNode.gain.value=.30;
+   musicGainNode.gain.value=.34;
    musicSource.connect(musicGainNode);
    musicGainNode.connect(audioDestination);
    musicElement.load();
@@ -228,7 +228,7 @@ try{
   }
   if(musicGainNode&&narrationElement){
    narrationElement.onplay=()=>musicGainNode.gain.setTargetAtTime(.075,audioContext.currentTime,.2);
-   narrationElement.onended=()=>musicGainNode.gain.setTargetAtTime(.30,audioContext.currentTime,.35);
+   narrationElement.onended=()=>musicGainNode.gain.setTargetAtTime(.34,audioContext.currentTime,.35);
   }
  }
 }catch(e){
@@ -247,7 +247,7 @@ recorder.onerror=e=>{$('status').textContent='خطای ضبط ویدئو: '+(e.e
 recorder.ondataavailable=e=>{if(e.data&&e.data.size)chunks.push(e.data)};
 recorder.onstop=()=>{const blob=new Blob(chunks,{type:recorder.mimeType||'video/webm'});if(!blob.size){$('status').textContent='فایل ویدئو خالی ساخته شد؛ دوباره با Chrome یا Edge امتحان کن.';rendering=false;$('renderBtn').disabled=false;return}const url=URL.createObjectURL(blob);$('download').href=url;$('download').hidden=false;$('downloadVideoBtn').hidden=false;$('status').textContent='ویدئو آماده شد ('+Math.round(blob.size/1024/1024*10)/10+' مگابایت). برای ذخیره روی «دانلود ویدئو» بزن.';rendering=false;$('renderBtn').disabled=false;stream.getTracks().forEach(t=>t.stop());if(musicElement){musicElement.pause();musicElement.src='';}if(musicObjectUrl)URL.revokeObjectURL(musicObjectUrl);if(narrationElement){narrationElement.pause();narrationElement.src='';}voiceElements.forEach(el=>{el.pause();if(el.src)URL.revokeObjectURL(el.src)});if(musicTimer){clearInterval(musicTimer);musicTimer=null}musicNodes.forEach(n=>{try{if(n.stop)n.stop()}catch(e){}});musicNodes=[];if(audioContext)audioContext.close();if(narrationUrl)URL.revokeObjectURL(narrationUrl)};
 recorder.start(1000);if(musicElement){try{await audioContext.resume();await musicElement.play();$('status').textContent='موسیقی به مسیر صدای ویدئو وصل شد؛ در حال ضبط...'}catch(e){$('status').textContent='پخش موسیقی در ضبط ناموفق بود: '+e.message;try{recorder.stop()}catch(stopError){}return}}const per=Number($('duration').value)*1000;
-for(let i=0;i<s.length;i++){const img=loadedImages.length?loadedImages[i%loadedImages.length]:null,voice=voiceElements[i],start=performance.now();if(voice){voice.currentTime=0;if(musicGainNode)musicGainNode.gain.setTargetAtTime(.065,audioContext.currentTime,.2);await voice.play()}while(performance.now()-start<per||(voice&&!voice.ended)){const progress=Math.min(1,(performance.now()-start)/per);draw(s[i],i,s.length,img,progress);await new Promise(r=>requestAnimationFrame(r))}if(voice&&musicGainNode)musicGainNode.gain.setTargetAtTime(.30,audioContext.currentTime,.25)}
+for(let i=0;i<s.length;i++){const img=loadedImages.length?loadedImages[i%loadedImages.length]:null,voice=voiceElements[i],start=performance.now();if(voice){voice.currentTime=0;if(musicGainNode)musicGainNode.gain.setTargetAtTime(.065,audioContext.currentTime,.2);await voice.play()}while(performance.now()-start<per||(voice&&!voice.ended)){const progress=Math.min(1,(performance.now()-start)/per);draw(s[i],i,s.length,img,progress);await new Promise(r=>requestAnimationFrame(r))}if(voice&&musicGainNode)musicGainNode.gain.setTargetAtTime(.34,audioContext.currentTime,.25)}
 if(narrationElement){while(!narrationElement.ended){draw(s[s.length-1],s.length-1,s.length,loadedImages.length?loadedImages[(s.length-1)%loadedImages.length]:null,1);await new Promise(r=>requestAnimationFrame(r))}}
 if(musicElement)musicElement.pause();if(narrationElement)narrationElement.pause();if(musicTimer){clearInterval(musicTimer);musicTimer=null}recorder.stop()};
 // خطاهای پیش‌بینی‌نشده را به‌جای بی‌واکنش ماندن دکمه، در صفحه نشان بده.
