@@ -286,14 +286,66 @@ function sceneImage(scene,index){
 }
 function foregroundImage(scene,index){return vectorForegroundCache[sceneKind(scene)+'-'+index]||null}
 
-function draw(text,index,total,img,progress=1){const p=palette();ctx.clearRect(0,0,720,1280);ctx.fillStyle=p.bg;ctx.fillRect(0,0,720,1280);
-if(img){const scale=Math.max(720/img.width,1280/img.height),w=img.width*scale,h=img.height*scale;ctx.globalAlpha=$('theme').value==='light'?.38:.58;ctx.drawImage(img,(720-w)/2,(1280-h)/2,w,h);ctx.globalAlpha=1;ctx.fillStyle=p.bg;ctx.globalAlpha=.14;ctx.fillRect(0,0,720,1280);ctx.globalAlpha=1}
-ctx.fillStyle=p.gold;ctx.fillRect(70,100,580,5);ctx.fillStyle=p.ink;ctx.textAlign='center';ctx.direction='rtl';ctx.font='700 27px Vazirmatn, IRANSans, Tahoma, sans-serif';ctx.fillText($('headline').value.trim()||'نکته حقوقی',360,174);
-const cardY=330,cardH=610;ctx.save();ctx.shadowColor='#00000030';ctx.shadowBlur=28;ctx.shadowOffsetY=12;ctx.fillStyle=p.panel;ctx.globalAlpha=.64;ctx.beginPath();ctx.roundRect(48,cardY,624,cardH,30);ctx.fill();ctx.globalAlpha=1;ctx.restore();ctx.strokeStyle=p.gold;ctx.globalAlpha=.6;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(48,cardY,624,cardH,30);ctx.stroke();ctx.globalAlpha=1;
-ctx.fillStyle=p.ink;ctx.font='700 34px Vazirmatn, IRANSans, Tahoma, sans-serif';let lines=wrap(text,540);if(lines.length>5){ctx.font='700 29px Vazirmatn, IRANSans, Tahoma, sans-serif';lines=wrap(text,550)}if(lines.length>7){ctx.font='700 25px Vazirmatn, IRANSans, Tahoma, sans-serif';lines=wrap(text,560)}const lineH=46,start=405+(285-lines.length*lineH)/2;lines.forEach((line,i)=>ctx.fillText(line,360,start+i*lineH));const art=foregroundImage(text,index);if(art){ctx.save();ctx.globalAlpha=.98;ctx.drawImage(art,220,710,280,190);ctx.restore()}
-ctx.fillStyle=p.gold;ctx.fillRect(70,1100,580,3);ctx.fillStyle=p.ink;ctx.font='700 23px Vazirmatn, IRANSans, Tahoma, sans-serif';ctx.fillText('مجید خاتمی',360,1150);ctx.fillStyle=p.muted;ctx.font='500 19px Vazirmatn, IRANSans, Tahoma, sans-serif';ctx.fillText(($('signatureLine').value.trim()||''),360,1190);
-ctx.fillStyle=p.muted;ctx.font='18px Vazirmatn, IRANSans, Tahoma, sans-serif';ctx.fillText((index+1)+' / '+total,360,1235);
-ctx.fillStyle=p.gold;ctx.fillRect(70,1260,580*(index+progress)/total,5)}
+function draw(text,index,total,img,progress=1){
+ const p=palette(),kind=sceneKind(text);
+ ctx.clearRect(0,0,720,1280);
+ const bg=ctx.createLinearGradient(0,0,720,1280);bg.addColorStop(0,p.bg);bg.addColorStop(.55,p.panel);bg.addColorStop(1,p.bg);
+ ctx.fillStyle=bg;ctx.fillRect(0,0,720,1280);
+ // Soft decorative geometry and a fine outer frame
+ ctx.save();ctx.globalAlpha=.12;ctx.fillStyle=p.gold;
+ ctx.beginPath();ctx.arc(620,250,155,0,Math.PI*2);ctx.fill();
+ ctx.beginPath();ctx.arc(80,930,115,0,Math.PI*2);ctx.fill();
+ ctx.globalAlpha=.22;ctx.strokeStyle=p.gold;ctx.lineWidth=2;
+ ctx.beginPath();ctx.roundRect(24,28,672,1224,28);ctx.stroke();
+ ctx.globalAlpha=.35;for(let i=0;i<5;i++){ctx.beginPath();ctx.arc(78+i*16,78,2.5,0,Math.PI*2);ctx.fill()}
+ ctx.restore();
+ if(img){const scale=Math.max(720/img.width,1280/img.height),w=img.width*scale,h=img.height*scale;ctx.globalAlpha=$('theme').value==='light'?.38:.58;ctx.drawImage(img,(720-w)/2,(1280-h)/2,w,h);ctx.globalAlpha=1;ctx.fillStyle=p.bg;ctx.globalAlpha=.14;ctx.fillRect(0,0,720,1280);ctx.globalAlpha=1}
+ // Header ornament
+ ctx.save();ctx.textAlign='center';ctx.direction='rtl';
+ ctx.fillStyle=p.gold;ctx.fillRect(105,105,510,3);ctx.fillRect(155,116,410,1);
+ ctx.beginPath();ctx.arc(360,106,7,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle=p.ink;ctx.font='700 28px Vazirmatn, IRANSans, Tahoma, sans-serif';ctx.fillText($('headline').value.trim()||'نکته حقوقی',360,174);
+ ctx.fillStyle=p.gold;ctx.globalAlpha=.95;ctx.beginPath();ctx.roundRect(270,205,180,38,19);ctx.fill();
+ ctx.globalAlpha=1;ctx.fillStyle=$('theme').value==='light'?'#fffdf8':'#101d35';ctx.font='700 16px Vazirmatn, IRANSans, Tahoma, sans-serif';ctx.fillText('نکته حقوقی',360,230);
+ ctx.restore();
+ // Main content card with a richer layered border
+ const cardY=300,cardH=660;
+ ctx.save();ctx.shadowColor='#00000045';ctx.shadowBlur=34;ctx.shadowOffsetY=15;
+ const cg=ctx.createLinearGradient(48,cardY,672,cardY+cardH);cg.addColorStop(0,p.panel);cg.addColorStop(1,p.bg);
+ ctx.fillStyle=cg;ctx.beginPath();ctx.roundRect(48,cardY,624,cardH,34);ctx.fill();ctx.restore();
+ ctx.save();ctx.strokeStyle=p.gold;ctx.globalAlpha=.78;ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(48,cardY,624,cardH,34);ctx.stroke();
+ ctx.globalAlpha=.32;ctx.lineWidth=1;ctx.beginPath();ctx.roundRect(58,cardY+10,604,cardH-20,27);ctx.stroke();
+ // Small corner ornaments
+ ctx.globalAlpha=.9;ctx.fillStyle=p.gold;
+ [[78,330],[642,330],[78,930],[642,930]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill()});
+ ctx.restore();
+ // Text block
+ ctx.save();ctx.fillStyle=p.ink;ctx.textAlign='center';ctx.direction='rtl';
+ ctx.font='700 34px Vazirmatn, IRANSans, Tahoma, sans-serif';let lines=wrap(text,540);
+ if(lines.length>5){ctx.font='700 29px Vazirmatn, IRANSans, Tahoma, sans-serif';lines=wrap(text,550)}
+ if(lines.length>7){ctx.font='700 25px Vazirmatn, IRANSans, Tahoma, sans-serif';lines=wrap(text,560)}
+ const lineH=46,start=390+(300-lines.length*lineH)/2;
+ lines.forEach((line,i)=>ctx.fillText(line,360,start+i*lineH));
+ ctx.restore();
+ // A subtle medallion behind the independent transparent vector
+ const art=foregroundImage(text,index);
+ if(art){
+  ctx.save();const halo=ctx.createRadialGradient(360,805,12,360,805,150);halo.addColorStop(0,p.gold+'30');halo.addColorStop(1,p.gold+'00');
+  ctx.fillStyle=halo;ctx.beginPath();ctx.arc(360,805,150,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=.98;ctx.drawImage(art,220,700,280,205);ctx.restore();
+ }
+ // Footer identity and progress
+ ctx.save();ctx.textAlign='center';ctx.direction='rtl';
+ ctx.strokeStyle=p.gold;ctx.globalAlpha=.8;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(105,1065);ctx.lineTo(615,1065);ctx.stroke();
+ ctx.fillStyle=p.gold;ctx.beginPath();ctx.arc(360,1065,5,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle=p.ink;ctx.font='700 24px Vazirmatn, IRANSans, Tahoma, sans-serif';ctx.fillText('مجید خاتمی',360,1120);
+ ctx.fillStyle=p.muted;ctx.font='500 19px Vazirmatn, IRANSans, Tahoma, sans-serif';ctx.fillText(($('signatureLine').value.trim()||''),360,1160);
+ ctx.fillStyle=p.muted;ctx.font='600 17px Vazirmatn, IRANSans, Tahoma, sans-serif';ctx.fillText('اسلاید '+(index+1)+' از '+total,360,1210);
+ ctx.restore();
+ // Progress bar with rounded end caps
+ ctx.save();ctx.fillStyle=p.gold;ctx.globalAlpha=.22;ctx.beginPath();ctx.roundRect(70,1244,580,6,3);ctx.fill();
+ ctx.globalAlpha=1;ctx.beginPath();ctx.roundRect(70,1244,Math.max(4,580*(index+progress)/total),6,3);ctx.fill();ctx.restore();
+}
 function showImageOrder(){const box=$('imageOrder');box.innerHTML='';selectedImageFiles.forEach((f,i)=>{const item=document.createElement('div');item.className='image-order-item image-order-entry';const name=document.createElement('span');name.textContent=(i+1)+'. '+f.name;const up=document.createElement('button');up.type='button';up.textContent='↑';up.disabled=i===0;up.title='انتقال به قبل';up.onclick=()=>moveImage(i,-1);const down=document.createElement('button');down.type='button';down.textContent='↓';down.disabled=i===selectedImageFiles.length-1;down.title='انتقال به بعد';down.onclick=()=>moveImage(i,1);item.append(name,up,down);box.append(item)});if(!selectedImageFiles.length)box.textContent='تصویر پس‌زمینه برای هر صحنه به‌صورت خودکار انتخاب می‌شود.'}
 function moveImage(index,delta){const target=index+delta;if(target<0||target>=selectedImageFiles.length)return;[selectedImageFiles[index],selectedImageFiles[target]]=[selectedImageFiles[target],selectedImageFiles[index]];showImageOrder()}
 $('images').addEventListener('change',()=>{selectedImageFiles=Array.from($('images').files);showImageOrder()});
