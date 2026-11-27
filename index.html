@@ -269,17 +269,25 @@ function fallbackBackgroundSvg(kind,variant){
 }
 function cacheVectorImage(cache,key,svg){
  if(cache[key])return Promise.resolve(cache[key]);
- return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>{cache[key]=im;resolve(im)};im.onerror=()=>reject(new Error('بارگذاری تصویر وکتوری ناموفق بود'));im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)});
+ return new Promise(resolve=>{
+  const im=new Image();let settled=false;
+  const finish=value=>{if(settled)return;settled=true;clearTimeout(timer);if(value)cache[key]=value;resolve(value||null)};
+  const timer=setTimeout(()=>finish(null),8000);
+  im.onload=()=>finish(im);im.onerror=()=>finish(null);
+  im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);
+ });
 }
 function cachePhoto(key,url){
  if(photoBackgroundCache[key])return Promise.resolve(photoBackgroundCache[key]);
  return new Promise(resolve=>{const im=new Image();im.crossOrigin='anonymous';im.onload=()=>{photoBackgroundCache[key]=im;resolve(im)};im.onerror=()=>resolve(null);im.src=url});
 }
 async function preloadVectorArt(sceneList){
- await Promise.all(sceneList.map((scene,index)=>{
-  const kind=sceneKind(scene),key=kind+'-'+index;
-  return cacheVectorImage(vectorForegroundCache,key,foregroundSvg(kind,(index+1)%3));
- }));
+ const total=sceneList.length;
+ for(let index=0;index<total;index++){
+  const kind=sceneKind(sceneList[index]),key=kind+'-'+index;
+  if($('status'))$('status').textContent='در حال آماده‌سازی وکتور اسلاید '+(index+1)+' از '+total+'...';
+  await cacheVectorImage(vectorForegroundCache,key,foregroundSvg(kind,(index+1)%3));
+ }
 }
 function sceneImage(scene,index){
  if(loadedImages.length)return loadedImages[index%loadedImages.length];
@@ -350,7 +358,20 @@ function draw(text,index,total,img,progress=1){
 function showImageOrder(){const box=$('imageOrder');box.innerHTML='';selectedImageFiles.forEach((f,i)=>{const item=document.createElement('div');item.className='image-order-item image-order-entry';const name=document.createElement('span');name.textContent=(i+1)+'. '+f.name;const up=document.createElement('button');up.type='button';up.textContent='↑';up.disabled=i===0;up.title='انتقال به قبل';up.onclick=()=>moveImage(i,-1);const down=document.createElement('button');down.type='button';down.textContent='↓';down.disabled=i===selectedImageFiles.length-1;down.title='انتقال به بعد';down.onclick=()=>moveImage(i,1);item.append(name,up,down);box.append(item)});if(!selectedImageFiles.length)box.textContent='تصویر پس‌زمینه برای هر صحنه به‌صورت خودکار انتخاب می‌شود.'}
 function moveImage(index,delta){const target=index+delta;if(target<0||target>=selectedImageFiles.length)return;[selectedImageFiles[index],selectedImageFiles[target]]=[selectedImageFiles[target],selectedImageFiles[index]];showImageOrder()}
 $('images').addEventListener('change',()=>{selectedImageFiles=Array.from($('images').files);showImageOrder()});
-async function loadImages(){imageUrls.forEach(URL.revokeObjectURL);imageUrls=[];loadedImages=[];for(const f of selectedImageFiles){if(!f.type.startsWith('image/'))continue;const u=URL.createObjectURL(f),im=new Image();im.src=u;await im.decode();imageUrls.push(u);loadedImages.push(im)}}
+async function loadImages(){
+ imageUrls.forEach(URL.revokeObjectURL);imageUrls=[];loadedImages=[];
+ for(const f of selectedImageFiles){
+  if(!f.type||!f.type.startsWith('image/'))continue;
+  const u=URL.createObjectURL(f),im=new Image();
+  try{
+   await Promise.race([
+    new Promise((resolve,reject)=>{im.onload=resolve;im.onerror=()=>reject(new Error('فایل تصویر قابل خواندن نیست'));im.src=u}),
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error('زمان بارگذاری تصویر تمام شد')),8000))
+   ]);
+   imageUrls.push(u);loadedImages.push(im);
+  }catch(e){URL.revokeObjectURL(u);console.warn('تصویر رد شد:',f.name,e.message)}
+ }
+}
 function stop(){if(timer){clearInterval(timer);timer=null}$('stopBtn').disabled=true}
 async function play(){try{stop();$('status').textContent='در حال آماده‌سازی پیش‌نمایش...';await loadImages();const s=scenes();if(!s.length){$('status').textContent='ابتدا سناریو را وارد کنید.';return}await preloadVectorArt(s);let i=0;const d=Number($('duration').value)*1000;draw(s[0],0,s.length,sceneImage(s[0],0));timer=setInterval(()=>{i=(i+1)%s.length;draw(s[i],i,s.length,sceneImage(s[i],i))},d);$('stopBtn').disabled=false;$('status').textContent='پیش‌نمایش در حال پخش است.'}catch(e){stop();$('status').textContent='خطا در پیش‌نمایش: '+(e.message||e)}}
 $('previewBtn').onclick=()=>{play().catch(e=>{$('status').textContent='خطا در پیش‌نمایش: '+(e.message||e)})};$('stopBtn').onclick=()=>{stop();$('status').textContent='پیش‌نمایش متوقف شد.'};$('downloadVideoBtn').onclick=()=>{const link=$('download');if(link.href){link.click()}else{$('status').textContent='هنوز ویدئویی آماده دانلود نیست.'}};
@@ -362,7 +383,7 @@ if(!$('narration').files[0]&&$('autoNarration').checked){
   try{$('status').textContent='در حال ساخت گویندگی جداگانه برای هر جمله...';autoNarrationBlob=[];for(let i=0;i<s.length;i++){ $('status').textContent='در حال ساخت صدای جمله '+(i+1)+' از '+s.length+'...';autoNarrationBlob.push(await synthesizeLocal(s[i]));}}
   catch(e){$('status').textContent='ساخت گویندگی ناموفق بود: '+e.message;rendering=false;$('renderBtn').disabled=false;return}
 }
-$('status').textContent='در حال آماده‌سازی تصاویر و موسیقی...';await loadImages();await preloadVectorArt(s);
+$('status').textContent='در حال آماده‌سازی تصاویر بارگذاری‌شده...';await loadImages();await preloadVectorArt(s);$('status').textContent='تصاویر آماده شد؛ در حال آماده‌سازی موسیقی...';
 const fps=30,stream=canvas.captureStream(fps),chunks=[];let audioContext=null,musicElement=null,musicObjectUrl=null,narrationElement=null,narrationUrl=null,musicGainNode=null,voiceElements=[];
 try{
  const musicMode=$('musicMode').value,musicFile=$('music').files[0],voiceFile=$('narration').files[0],voiceBlobs=Array.isArray(autoNarrationBlob)?autoNarrationBlob:null;
